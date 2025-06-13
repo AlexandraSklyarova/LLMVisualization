@@ -14,7 +14,7 @@ df.columns = df.columns.str.strip()
 df['Submission Date'] = pd.to_datetime(df['Submission Date'], errors='coerce')
 df = df[df['Type'].notna()]
 
-# --- Streamlit filters ---
+# Filters
 st.set_page_config(layout="wide")
 st.sidebar.header("Filters")
 
@@ -33,54 +33,51 @@ type_options = df["Type"].unique().tolist()
 selected_types = st.sidebar.multiselect("Select Model Types:", options=type_options, default=type_options)
 df = df[df["Type"].isin(selected_types)]
 
-# Score columns
+# Metric columns
 score_cols = ['IFEval', 'BBH', 'MATH Lvl 5', 'GPQA', 'MUSR', 'Average ⬆️']
 
-# Minimum Average Score
+# Score filter
 min_score = st.sidebar.slider("Minimum Average Score",
                               float(df['Average ⬆️'].min()),
                               float(df['Average ⬆️'].max()),
                               float(df['Average ⬆️'].min()))
 df = df[df['Average ⬆️'] >= min_score]
 
-# --- Aggregate and transform ---
-grouped = df.groupby("Type").agg({col: "mean" for col in score_cols}).reset_index()
-long_df = grouped.melt(id_vars=["Type"], var_name="Metric", value_name="Score")
+# Group and melt
+grouped = df.groupby("Type")[score_cols].mean().reset_index()
+long_df = grouped.melt(id_vars="Type", var_name="Metric", value_name="Score")
 
-# --- Bar chart with labels inside a facet ---
-base = alt.Chart(long_df).encode(
+# Final faceted chart: 1 layer only, with text marks
+chart = alt.Chart(long_df).mark_bar().encode(
     x=alt.X("Metric:N", title="Metric"),
     y=alt.Y("Score:Q", title="Average Score"),
-    color=alt.Color("Type:N", legend=None)
-)
-
-bars = base.mark_bar()
-
-text = base.mark_text(
-    align='center',
-    baseline='bottom',
-    dy=-2,
-    fontSize=11,
-    fontWeight='bold'
-).encode(
-    text=alt.Text("Score:Q", format=".2f")
-)
-
-# Combine layers, then facet
-score_chart = alt.layer(bars, text).facet(
-    column=alt.Column("Type:N", title="Model Type", columns=3),
-    spacing=25
-).resolve_scale(
-    x="independent",
-    y="independent"
-).configure_view(
-    continuousWidth=200,
-    continuousHeight=300
+    color=alt.Color("Metric:N", legend=None)
+).facet(
+    column=alt.Column("Type:N", title="Model Type", columns=3, header=alt.Header(labelAngle=0))
 ).properties(
     title="Evaluation Metrics by Model Type"
+).resolve_scale(
+    y='independent'
 )
 
-st.altair_chart(score_chart, use_container_width=True)
+# Text overlay using mark_text — separate chart to avoid schema issues
+text = alt.Chart(long_df).mark_text(
+    align='center',
+    baseline='bottom',
+    dy=-3,
+    fontSize=11
+).encode(
+    x=alt.X("Metric:N"),
+    y=alt.Y("Score:Q"),
+    text=alt.Text("Score:Q", format=".2f")
+).facet(
+    column=alt.Column("Type:N", title=None, columns=3)
+).resolve_scale(
+    y='independent'
+)
+
+# Combine safely in Streamlit
+st.altair_chart(chart + text, use_container_width=True)
 
 
 
