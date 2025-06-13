@@ -213,30 +213,33 @@ st.altair_chart(stacked_area, use_container_width=True)
 
 
 
-# Clean column names and rename
+
+import altair as alt
+
+# Clean column names and rename for safety
 df.columns = df.columns.str.strip()
 df = df.rename(columns={"Average ⬆️": "Average"})
-
-# Drop rows with missing required values
 df = df.dropna(subset=["Hub ❤️", "Average", "Type"])
 
-# Interactive selection
-type_selection = alt.selection_single(
-    fields=["Type"], 
-    name="Select", 
-    bind=alt.binding_select(options=sorted(df["Type"].unique())), 
-    init={"Type": df["Type"].value_counts().idxmax()}
+# Create parameter for selection
+type_param = alt.param(
+    name="SelectedType",
+    bind=alt.binding_select(
+        options=sorted(df["Type"].unique()),
+        name="Highlight Type: "
+    ),
+    value=sorted(df["Type"].unique())[0]  # default value
 )
 
-# Highlight layer for selected type
+# Background halo layer
 highlight = alt.Chart(df).mark_circle(
     size=300, opacity=0.1, stroke='black', strokeWidth=1
 ).encode(
     x=alt.X("Hub ❤️:Q"),
-    y=alt.Y("Average:Q"),
-).transform_filter(type_selection)
+    y=alt.Y("Average:Q")
+).transform_filter(type_param)
 
-# Main point layer
+# Main data points
 points = alt.Chart(df).mark_circle(size=120).encode(
     x=alt.X("Hub ❤️:Q", title="User Satisfaction (Hub ❤️)"),
     y=alt.Y("Average:Q", title="Average Score"),
@@ -244,7 +247,7 @@ points = alt.Chart(df).mark_circle(size=120).encode(
     tooltip=["Type", "Hub ❤️", "Average"]
 )
 
-# Trend line layer
+# Trend line (regression per type)
 trend = alt.Chart(df).transform_regression(
     "Hub ❤️", "Average", groupby=["Type"]
 ).mark_line(strokeDash=[3, 3]).encode(
@@ -253,12 +256,16 @@ trend = alt.Chart(df).transform_regression(
     color="Type:N"
 )
 
-# Combine everything
-chart = (highlight + points + trend).add_selection(type_selection).properties(
-    title="User Satisfaction vs Average Score (Interactive Highlight + Trend)",
-    width=700,
-    height=450
+# Combine all
+final_chart = (
+    alt.layer(highlight, points, trend)
+    .add_params(type_param)
+    .properties(
+        title="User Satisfaction vs Average Score (Interactive Highlight + Trend)",
+        width=700,
+        height=450
+    )
 )
 
-st.altair_chart(chart, use_container_width=True)
+st.altair_chart(final_chart, use_container_width=True)
 
