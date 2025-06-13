@@ -83,13 +83,13 @@ type_counts = df['Type'].value_counts().reset_index()
 type_counts.columns = ['Type', 'Count']
 
 # Pie chart
-pie = alt.Chart(type_counts).mark_arc(innerRadius=50, outerRadius=100).encode(
+pie = alt.Chart(type_counts).mark_arc(innerRadius=50, outerRadius=300).encode(
     theta=alt.Theta(field='Count', type='quantitative'),
     color=alt.Color(field='Type', type='nominal'),
     tooltip=['Type', 'Count']
 ).properties(
-    width=800,
-    height=800,
+    width=300,
+    height=300,
     title='Distribution of Model Types'
 )
 
