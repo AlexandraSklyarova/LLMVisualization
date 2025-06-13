@@ -110,6 +110,62 @@ for row_types in chunks(types, 3):
 
 
 
+#new 
+
+long_df = grouped.melt(
+    id_vars=["Type"],
+    value_vars=score_cols,
+    var_name="Metric",
+    value_name="Score"
+)
+
+# Create a selection for metrics
+metric_selection = alt.selection_point(
+    fields=["Metric"],
+    bind=alt.binding_select(options=long_df["Metric"].unique().tolist(), name="Highlight Metric: "),
+    name="SelectMetric"
+)
+
+# Get unique model types
+types = long_df["Type"].unique().tolist()
+
+# Chunk types into rows of 3
+def chunks(lst, n):
+    for i in range(0, len(lst), n):
+        yield lst[i:i + n]
+
+# Build chart for each type and lay out
+for row_types in chunks(types, 3):
+    cols = st.columns(len(row_types))  # create as many columns as needed
+    for i, t in enumerate(row_types):
+        filtered_df = long_df[long_df["Type"] == t]
+
+        base = alt.Chart(filtered_df).encode(
+            x=alt.X("Metric:N", title="Evaluation Metric"),
+            y=alt.Y("Score:Q", title="Avg Score"),
+            color=alt.Color("Metric:N", legend=None),
+            opacity=alt.condition(metric_selection, alt.value(1.0), alt.value(0.2))
+        ).add_params(metric_selection)
+
+        composed = alt.layer(
+            base.mark_bar(),
+            base.mark_text(
+                align="center",
+                baseline="bottom",
+                dy=-3,
+                fontSize=11
+            ).encode(text=alt.Text("Score:Q", format=".2f"))
+        ).properties(
+            title=t,
+            width=400,
+            height=600
+        )
+
+        cols[i].altair_chart(composed, use_container_width=True)
+
+
+
+
 
 
 st.markdown("###  LLM Evaluation Metrics Overview")
