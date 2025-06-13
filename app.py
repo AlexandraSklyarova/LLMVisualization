@@ -1,6 +1,7 @@
-import streamlit as st
 import pandas as pd
+import numpy as np
 import altair as alt
+import streamlit as st
 
 # Set wide layout
 st.set_page_config(layout="wide", page_title="LLM Leaderboard Dashboard")
