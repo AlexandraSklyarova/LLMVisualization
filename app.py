@@ -7,6 +7,7 @@ from datetime import datetime
 df = pd.read_csv("open-llm-leaderboards.csv")
 
 # --- Preprocess ---
+st.write("Available columns:", df.columns.tolist())
 df["submission_date"] = pd.to_datetime(df["submission_date"], errors='coerce')
 df["average_score"] = df[["IFEval_score", "BBH_score", "MUSR_score", "MATH_level_5_score", "GPQA_score"]].mean(axis=1)
 
