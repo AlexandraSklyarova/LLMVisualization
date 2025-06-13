@@ -143,7 +143,7 @@ def polar_positions(n, radius_step=1.5):
     y = [r * np.sin(a) for r, a in zip(radii, angles)]
     return x, y
 
-agg_df["x"], agg_df["y"] = polar_positions(len(agg_df), radius_step=0.6)
+agg_df["x"], agg_df["y"] = polar_positions(len(agg_df), radius_step=0.3)
 
 
 # --- BUBBLE CHART ---
