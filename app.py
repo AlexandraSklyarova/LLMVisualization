@@ -144,7 +144,10 @@ for row_types in chunks(types, 3):
 
 
 
-score_cols = ['IFEval', 'BBH', 'MATH Lvl 5', 'GPQA', 'MuSR', 'MMLU-Pro']
+# --- SAFELY HANDLE METRIC COLUMNS ---
+# First make sure all expected metric columns are actually in the grouped dataframe
+expected_metrics = ['IFEval', 'BBH', 'MATH Lvl 5', 'GPQA', 'MuSR', 'MMLU-Pro']
+score_cols = [col for col in expected_metrics if col in grouped.columns]
 
 # Get best model type for each metric
 best_types = []
@@ -160,6 +163,7 @@ for metric in score_cols:
 best_df = pd.DataFrame(best_types)
 st.markdown("### 🏆 Best LLM Type per Evaluation Metric")
 st.table(best_df)
+
 
 
 
