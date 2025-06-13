@@ -384,8 +384,8 @@ df["Hub ❤️"] = pd.to_numeric(df["Hub ❤️"], errors="coerce")
 df["Average"] = pd.to_numeric(df["Average"], errors="coerce")
 df = df.dropna(subset=["Hub ❤️", "Average"])
 
-# Bin satisfaction (20-point range) and average score (5-point range)
-df["Satisfaction_Bin"] = (df["Hub ❤️"] // 20) * 20
+# Bin satisfaction (10-point range) and average score (5-point range)
+df["Satisfaction_Bin"] = (df["Hub ❤️"] // 10) * 10
 df["Average_Bin"] = (df["Average"] // 5) * 5
 
 # Count eval_name entries per bin
@@ -393,8 +393,8 @@ binned = df.groupby(["Satisfaction_Bin", "Average_Bin"])["eval_name"].count().re
 
 # Create the heatmap
 heatmap = alt.Chart(binned).mark_rect().encode(
-    x=alt.X("Satisfaction_Bin:O", title="User Satisfaction Bin (20 pt range)"),
-    y=alt.Y("Average_Bin:O", title="Average Score Bin (5 pt range)"),
+    x=alt.X("Satisfaction_Bin:O", title="User Satisfaction Bin (10 pt range)"),
+    y=alt.Y("Average_Bin:O", title="Average Score Bin (5 pt range)", sort="ascending"),
     color=alt.Color("Eval Count:Q", scale=alt.Scale(scheme="blues"), title="Evaluation Count"),
     tooltip=["Satisfaction_Bin", "Average_Bin", "Eval Count"]
 ).properties(
