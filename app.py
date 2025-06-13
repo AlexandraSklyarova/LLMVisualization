@@ -111,46 +111,6 @@ for row_types in chunks(types, 3):
 
 
 
-#new 
-
-selected_metric = st.selectbox("Highlight a Metric:", score_cols)
-
-# --- Generate charts by model Type ---
-for row_types in chunks(types, 3):
-    cols = st.columns(len(row_types))
-    for i, t in enumerate(row_types):
-        chart_base = alt.Chart(long_df).transform_filter(
-            alt.datum.Type == t
-        ).encode(
-            x=alt.X("Metric:N", title="Evaluation Metric"),
-            y=alt.Y("Score:Q", title="Avg Score"),
-            color=alt.Color("Metric:N", legend=None),
-            opacity=alt.condition(
-                f"datum.Metric === '{selected_metric}'",
-                alt.value(1.0),
-                alt.value(0.2)
-            )
-        )
-
-        bars = chart_base.mark_bar()
-        labels = chart_base.mark_text(
-            align="center",
-            baseline="bottom",
-            dy=-3,
-            fontSize=11
-        ).encode(text=alt.Text("Score:Q", format=".2f"))
-
-        composed = alt.layer(bars, labels).properties(
-            title=t,
-            width=400,
-            height=600
-        )
-
-        cols[i].altair_chart(composed, use_container_width=True)
-
-
-
-
 
 st.markdown("###  LLM Evaluation Metrics Overview")
 
