@@ -472,8 +472,8 @@ area = alt.Chart(monthly).mark_area(interpolate="monotone").encode(
     height=500
 )
 
-st.altair_chart(area, use_container_width=True) + st.altair_chart(bubbles + labels, use_container_width=True)
-
+st.altair_chart(area, use_container_width=True)
+st.altair_chart(bubbles + labels, use_container_width=True)
 
 
 
