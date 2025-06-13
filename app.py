@@ -116,6 +116,7 @@ for row_types in chunks(types, 3):
 score_cols = ['IFEval', 'BBH', 'MATH Lvl 5', 'GPQA', 'MUSR', 'Average ⬆️']
 grouped = df.groupby("Type").agg({col: "mean" for col in score_cols}).reset_index()
 
+# Melt the dataframe
 long_df = grouped.melt(
     id_vars=["Type"],
     value_vars=score_cols,
@@ -123,18 +124,17 @@ long_df = grouped.melt(
     value_name="Score"
 )
 
-# Add selection for interactivity
-type_select = alt.selection_point(fields=["Type"])
+# --- Selection on Metric ---
+metric_select = alt.selection_point(fields=["Metric"])
 
-# Unique model types
+# Split into chunks of 3 for layout
 types = long_df["Type"].unique().tolist()
 
-# Split types into chunks
 def chunks(lst, n):
     for i in range(0, len(lst), n):
         yield lst[i:i + n]
 
-# Build chart with selection logic added
+# --- Build faceted charts with selection logic ---
 for row_types in chunks(types, 3):
     cols = st.columns(len(row_types))
     for i, t in enumerate(row_types):
@@ -144,7 +144,7 @@ for row_types in chunks(types, 3):
             x=alt.X("Metric:N", title="Evaluation Metric"),
             y=alt.Y("Score:Q", title="Avg Score"),
             color=alt.Color("Metric:N", legend=None),
-            opacity=alt.condition(type_select, alt.value(1.0), alt.value(0.2))
+            opacity=alt.condition(metric_select, alt.value(1.0), alt.value(0.2))
         )
 
         composed = alt.layer(
@@ -159,7 +159,7 @@ for row_types in chunks(types, 3):
             title=t,
             width=400,
             height=600
-        ).add_params(type_select)
+        ).add_params(metric_select)
 
         cols[i].altair_chart(composed, use_container_width=True)
 
