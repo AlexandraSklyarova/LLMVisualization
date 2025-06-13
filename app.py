@@ -390,6 +390,7 @@ st.altair_chart(final_chart, use_container_width=True)
 
 #new
 
+df = pd.read_csv("open-llm-leaderboards.csv")
 df.columns = df.columns.str.strip()
 df = df.rename(columns={"Average ⬆️": "Average"})
 
@@ -397,77 +398,83 @@ df = df.dropna(subset=["CO₂ cost (kg)", "Type", "Upload To Hub Date"])
 df["CO₂ cost (kg)"] = pd.to_numeric(df["CO₂ cost (kg)"], errors="coerce")
 df["Upload To Hub Date"] = pd.to_datetime(df["Upload To Hub Date"], errors="coerce")
 df = df.dropna(subset=["CO₂ cost (kg)", "Upload To Hub Date"])
-df["Month"] = df["Upload To Hub Date"].dt.to_period('M').dt.to_timestamp()
+df["Month"] = df["Upload To Hub Date"].dt.to_period("M").dt.to_timestamp()
 
-# --- Create selection from the legend ---
-type_selection = alt.selection_point(fields=["Type"], bind="legend")
+# --- Shared selection across charts ---
+selection = alt.selection_point(fields=["Type"], bind="legend")
 
-# --- Bubble chart data ---
-bubble_data = df.groupby("Type", as_index=False)["CO₂ cost (kg)"].sum()
-bubble_data["CO₂ Rounded"] = bubble_data["CO₂ cost (kg)"].round().astype(int)
-bubble_data["Size"] = bubble_data["CO₂ cost (kg)"] ** 4
-
-def polar_positions(n, radius_step=0.4):
-    angles, radii = [], []
-    for i in range(n):
-        r = radius_step * np.sqrt(i)
-        theta = i * 137.5
-        angles.append(np.deg2rad(theta))
-        radii.append(r)
-    x = [r * np.cos(a) for r, a in zip(radii, angles)]
-    y = [r * np.sin(a) for r, a in zip(radii, angles)]
-    return x, y
-
-bubble_data["x"], bubble_data["y"] = polar_positions(len(bubble_data))
-
-# --- Bubble chart ---
-bubbles = alt.Chart(bubble_data).mark_circle(opacity=0.9).encode(
+# --- Bubble chart using raw data ---
+bubble = alt.Chart(df).transform_aggregate(
+    total_co2='sum(CO₂ cost (kg))',
+    groupby=['Type']
+).transform_window(
+    index='rank()',
+    sort=[alt.SortField("total_co2", order="descending")]
+).transform_calculate(
+    angle='datum.index * 137.5',
+    radius='0.4 * sqrt(datum.index)',
+    x='datum.radius * cos(datum.angle * PI / 180)',
+    y='datum.radius * sin(datum.angle * PI / 180)',
+    size='pow(datum.total_co2, 4)',
+    label='round(datum.total_co2)'
+).mark_circle(opacity=0.9).encode(
     x=alt.X("x:Q", axis=None),
     y=alt.Y("y:Q", axis=None),
-    size=alt.Size("Size:Q", scale=alt.Scale(range=[2500, 30000]), legend=None),
+    size=alt.Size("size:Q", legend=None, scale=alt.Scale(range=[2000, 30000])),
     color=alt.Color("Type:N", legend=alt.Legend(title="Model Type")),
-    opacity=alt.condition(type_selection, alt.value(1.0), alt.value(0.2)),
+    opacity=alt.condition(selection, alt.value(1.0), alt.value(0.2)),
     tooltip=[
-        alt.Tooltip("Type:N", title="Model Type"),
-        alt.Tooltip("CO₂ cost (kg):Q", title="Total CO₂ (kg)", format=",.0f")
+        alt.Tooltip("Type:N"),
+        alt.Tooltip("total_co2:Q", title="Total CO₂ (kg)", format=",.0f")
     ]
-).add_params(type_selection).properties(
-    title="Packed Bubble Chart of CO₂ Emissions by Model Type",
+).add_params(selection).properties(
+    title="Bubble Chart of CO₂ Emissions by Model Type",
     width=700,
     height=600
 )
 
-# --- Labels on bubbles ---
-labels = alt.Chart(bubble_data).mark_text(
+labels = alt.Chart(df).transform_aggregate(
+    total_co2='sum(CO₂ cost (kg))',
+    groupby=['Type']
+).transform_window(
+    index='rank()',
+    sort=[alt.SortField("total_co2", order="descending")]
+).transform_calculate(
+    angle='datum.index * 137.5',
+    radius='0.4 * sqrt(datum.index)',
+    x='datum.radius * cos(datum.angle * PI / 180)',
+    y='datum.radius * sin(datum.angle * PI / 180)',
+    label='round(datum.total_co2)'
+).mark_text(
     fontSize=11,
     fontWeight="bold",
     color="black"
 ).encode(
     x="x:Q",
     y="y:Q",
-    text="CO₂ Rounded:Q",
-    opacity=alt.condition(type_selection, alt.value(1.0), alt.value(0.2))
+    text="label:N",
+    opacity=alt.condition(selection, alt.value(1.0), alt.value(0.2))
 )
 
-st.altair_chart(bubbles + labels, use_container_width=True)
+st.altair_chart(bubble + labels, use_container_width=True)
 
-# --- Area chart data ---
-monthly = df.groupby(["Month", "Type"])["CO₂ cost (kg)"].sum().reset_index()
-monthly["Cumulative CO₂"] = monthly.sort_values("Month").groupby("Type")["CO₂ cost (kg)"].cumsum()
+# --- Area chart using same raw data ---
+cumulative = df.copy()
+cumulative = cumulative.sort_values("Month")
+cumulative["Cumulative CO₂"] = cumulative.groupby("Type")["CO₂ cost (kg)"].cumsum()
 
-# --- Area chart ---
-area = alt.Chart(monthly).mark_area(interpolate="monotone").encode(
-    x=alt.X("Month:T", title="Month", axis=alt.Axis(format="%b %Y")),
-    y=alt.Y("Cumulative CO₂:Q", title="Cumulative CO₂ Emissions (kg)", stack="zero"),
+area = alt.Chart(cumulative).mark_area(interpolate="monotone").encode(
+    x=alt.X("Month:T", title="Month"),
+    y=alt.Y("Cumulative CO₂:Q", stack="zero", title="Cumulative CO₂ Emissions (kg)"),
     color=alt.Color("Type:N", legend=alt.Legend(title="Model Type")),
-    opacity=alt.condition(type_selection, alt.value(1.0), alt.value(0.2)),
+    opacity=alt.condition(selection, alt.value(1.0), alt.value(0.2)),
     tooltip=[
-        alt.Tooltip("Month:T", title="Month", format="%B %Y"),
-        alt.Tooltip("Type:N", title="Model Type"),
-        alt.Tooltip("Cumulative CO₂:Q", format=",.0f", title="Cumulative CO₂ (kg)")
+        alt.Tooltip("Month:T", format="%b %Y"),
+        alt.Tooltip("Type:N"),
+        alt.Tooltip("Cumulative CO₂:Q", format=",.0f")
     ]
-).add_params(type_selection).properties(
-    title="Cumulative Carbon Emissions Over Time (Stacked by Type)",
+).add_params(selection).properties(
+    title="Cumulative Carbon Emissions Over Time",
     width=1000,
     height=500
 )
