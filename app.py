@@ -370,9 +370,8 @@ st.altair_chart(combined_chart, use_container_width=True)
 
 
 heatmap = alt.Chart(grouped).transform_bin(
-    "binned_satisfaction", field="Hub ❤️", bin=alt.Bin(maxbins=40)
-).transform_bin(
-    "binned_score", field="Average ⬆️", bin=alt.Bin(maxbins=40)
+    [{"as": "binned_satisfaction", "field": "Hub ❤️", "bin": alt.Bin(maxbins=40)},
+     {"as": "binned_score", "field": "Average ⬆️", "bin": alt.Bin(maxbins=40)}]
 ).transform_aggregate(
     count="count()", groupby=["binned_satisfaction", "binned_score"]
 ).mark_rect().encode(
@@ -385,9 +384,6 @@ heatmap = alt.Chart(grouped).transform_bin(
     width=600,
     height=400
 )
-
-# Display the chart
-st.altair_chart(heatmap, use_container_width=True)
 
 
 
