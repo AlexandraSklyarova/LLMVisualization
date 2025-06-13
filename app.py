@@ -448,6 +448,7 @@ labels = alt.Chart(bubble_data).mark_text(
     text="CO₂ Rounded:Q",
     opacity=alt.condition(type_selection, alt.value(1.0), alt.value(0.2))
 )
+st.altair_chart(bubbles + labels, use_container_width=True)
 
 
 
@@ -473,7 +474,7 @@ area = alt.Chart(monthly).mark_area(interpolate="monotone").encode(
 )
 
 st.altair_chart(area, use_container_width=True)
-st.altair_chart(bubbles + labels, use_container_width=True)
+
 
 
 
