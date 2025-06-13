@@ -116,7 +116,7 @@ for row_types in chunks(types, 3):
 score_cols = ['IFEval', 'BBH', 'MATH Lvl 5', 'GPQA', 'MUSR', 'Average ⬆️']
 grouped = df.groupby("Type").agg({col: "mean" for col in score_cols}).reset_index()
 
-# Melt the dataframe
+# Melt to long format
 long_df = grouped.melt(
     id_vars=["Type"],
     value_vars=score_cols,
@@ -124,21 +124,21 @@ long_df = grouped.melt(
     value_name="Score"
 )
 
-# --- Selection on Metric ---
-metric_select = alt.selection_point(fields=["Metric"])
+# --- Shared Selection on Metric ---
+metric_select = alt.selection_point(fields=["Metric"], clear="click")
 
-# Split into chunks of 3 for layout
+# Split types into rows of 3
 types = long_df["Type"].unique().tolist()
 
 def chunks(lst, n):
     for i in range(0, len(lst), n):
         yield lst[i:i + n]
 
-# --- Build faceted charts with selection logic ---
+# --- Build Chart Grid with Shared Selection ---
 for row_types in chunks(types, 3):
     cols = st.columns(len(row_types))
     for i, t in enumerate(row_types):
-        chart = alt.Chart(long_df).transform_filter(
+        base = alt.Chart(long_df).transform_filter(
             alt.datum.Type == t
         ).encode(
             x=alt.X("Metric:N", title="Evaluation Metric"),
@@ -147,19 +147,19 @@ for row_types in chunks(types, 3):
             opacity=alt.condition(metric_select, alt.value(1.0), alt.value(0.2))
         )
 
-        composed = alt.layer(
-            chart.mark_bar(),
-            chart.mark_text(
-                align="center",
-                baseline="bottom",
-                dy=-3,
-                fontSize=11
-            ).encode(text=alt.Text("Score:Q", format=".2f"))
-        ).properties(
+        bar = base.mark_bar()
+        text = base.mark_text(
+            align="center",
+            baseline="bottom",
+            dy=-3,
+            fontSize=11
+        ).encode(text=alt.Text("Score:Q", format=".2f"))
+
+        composed = alt.layer(bar, text).add_params(metric_select).properties(
             title=t,
             width=400,
             height=600
-        ).add_params(metric_select)
+        )
 
         cols[i].altair_chart(composed, use_container_width=True)
 
