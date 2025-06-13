@@ -7,7 +7,7 @@ import streamlit as st
 # --- Load Data ---
 df = pd.read_csv("open-llm-leaderboards.csv")
 
-
+ 
 
 # Clean and preprocess
 df.columns = df.columns.str.strip()
