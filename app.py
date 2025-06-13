@@ -433,7 +433,7 @@ bubbles = alt.Chart(bubble_data).mark_circle(opacity=0.9).encode(
     ]
 ).add_params(type_selection).properties(
     title="Packed Bubble Chart of CO₂ Emissions by Model Type",
-    width=700,
+    width=1000,
     height=600
 )
 
@@ -448,9 +448,8 @@ labels = alt.Chart(bubble_data).mark_text(
     text="CO₂ Rounded:Q",
     opacity=alt.condition(type_selection, alt.value(1.0), alt.value(0.2))
 )
-st.altair_chart(bubbles + labels, use_container_width=True)
 
-
+bubble_combined = bubbles + labels
 
 # --- Area chart data ---
 monthly = df.groupby(["Month", "Type"])["CO₂ cost (kg)"].sum().reset_index()
@@ -460,7 +459,7 @@ monthly["Cumulative CO₂"] = monthly.sort_values("Month").groupby("Type")["CO�
 area = alt.Chart(monthly).mark_area(interpolate="monotone").encode(
     x=alt.X("Month:T", title="Month", axis=alt.Axis(format="%b %Y")),
     y=alt.Y("Cumulative CO₂:Q", title="Cumulative CO₂ Emissions (kg)", stack="zero"),
-    color=alt.Color("Type:N", legend=alt.Legend(title="Model Type")),
+    color=alt.Color("Type:N", legend=None),  # suppress duplicate legend
     opacity=alt.condition(type_selection, alt.value(1.0), alt.value(0.2)),
     tooltip=[
         alt.Tooltip("Month:T", title="Month", format="%B %Y"),
@@ -473,7 +472,16 @@ area = alt.Chart(monthly).mark_area(interpolate="monotone").encode(
     height=500
 )
 
-st.altair_chart(area, use_container_width=True)
+# --- Combine vertically to preserve interactivity ---
+combined_chart = alt.vconcat(
+    area,
+    bubble_combined
+).resolve_legend(
+    color="independent"
+)
+
+# --- Display in Streamlit ---
+st.altair_chart(combined_chart, use_container_width=True)
 
 
 
