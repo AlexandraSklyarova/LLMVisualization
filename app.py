@@ -420,3 +420,43 @@ heatmap = alt.Chart(binned).mark_rect().encode(
 
 # Display in Streamlit
 st.altair_chart(heatmap, use_container_width=True)
+
+
+
+
+
+df.columns = df.columns.str.strip()
+df = df.rename(columns={"Average ⬆️": "Average"})
+df = df.dropna(subset=["Hub ❤️", "Average", "eval_name"])
+df["Hub ❤️"] = pd.to_numeric(df["Hub ❤️"], errors="coerce")
+df["Average"] = pd.to_numeric(df["Average"], errors="coerce")
+df = df.dropna(subset=["Hub ❤️", "Average"])
+
+# --- Binning ---
+df["Satisfaction_Bin"] = ((df["Hub ❤️"] // 10) * 10).astype(int)
+df["Average_Bin"] = ((df["Average"] // 5) * 5).astype(int)
+
+# --- Aggregation ---
+binned = df.groupby(["Satisfaction_Bin", "Average_Bin"])["eval_name"].count().reset_index(name="Eval Count")
+
+# --- Brushing Selection ---
+brush = alt.selection_interval(encodings=["x", "y"], name="brush")
+
+# --- Heatmap ---
+heatmap = alt.Chart(binned).mark_rect().encode(
+    x=alt.X("Satisfaction_Bin:O", title="User Satisfaction Bin (10 pt range)"),
+    y=alt.Y("Average_Bin:O", title="Average Score Bin (5 pt range)", sort="ascending"),
+    color=alt.condition(
+        brush,
+        alt.Color("Eval Count:Q", scale=alt.Scale(scheme="blues"), title="Evaluation Count"),
+        alt.value("lightgray")
+    ),
+    tooltip=["Satisfaction_Bin", "Average_Bin", "Eval Count"]
+).add_params(brush).properties(
+    width=600,
+    height=500,
+    title="🧪 Evaluation Density by Satisfaction & Score (Brush to Explore)"
+)
+
+# --- Display in Streamlit ---
+st.altair_chart(heatmap, use_container_width=True)
