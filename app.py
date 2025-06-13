@@ -115,30 +115,43 @@ pie
 
 
 
-df["Exaggerated Size"] = df["CO₂ cost (kg)"] ** 2
+# --- CLEAN AND RENAME COLUMNS ---
+df.columns = df.columns.str.strip()
 
-# Filter out NaNs
-df = df.dropna(subset=["CO₂ cost (kg)", "Type", "Average"])
+# Rename the emoji column for compatibility
+df = df.rename(columns={"Average ⬆️": "Average"})
 
-# Precompute random layout positions
-np.random.seed(42)
-df["rand_x"] = np.random.rand(len(df))
-df["rand_y"] = np.random.rand(len(df))
+# ✅ Now verify the columns exist
+required_cols = ["CO₂ cost (kg)", "Type", "Average"]
+missing = [col for col in required_cols if col not in df.columns]
+if missing:
+    st.error(f"Missing columns: {missing}")
+else:
+    # --- FILTER OUT MISSING DATA ---
+    df = df.dropna(subset=required_cols)
 
-# Build packed-ish circle chart
-carbon_bubbles = alt.Chart(df).mark_circle(opacity=0.85).encode(
-    x=alt.X("rand_x:Q", axis=None),
-    y=alt.Y("rand_y:Q", axis=None),
-    size=alt.Size("Exaggerated Size:Q", legend=None, scale=alt.Scale(range=[100, 10000])),
-    color=alt.Color("Type:N", legend=alt.Legend(title="Model Type")),
-    tooltip=["Type", "CO₂ cost (kg):Q", "Average:Q"]
-).properties(
-    title="Relative Carbon Footprint of AI Models (Packed Circles)",
-    width=700,
-    height=500
-)
+    # --- EXAGGERATE FOR VISUAL EMPHASIS ---
+    df["Exaggerated Size"] = df["CO₂ cost (kg)"] ** 2
 
-st.altair_chart(carbon_bubbles, use_container_width=True)
+    # --- PRECOMPUTE RANDOM LAYOUT (FOR PACKED CIRCLE LOOK) ---
+    np.random.seed(42)
+    df["rand_x"] = np.random.rand(len(df))
+    df["rand_y"] = np.random.rand(len(df))
+
+    # --- PACKED CIRCLES CHART ---
+    carbon_bubbles = alt.Chart(df).mark_circle(opacity=0.85).encode(
+        x=alt.X("rand_x:Q", axis=None),
+        y=alt.Y("rand_y:Q", axis=None),
+        size=alt.Size("Exaggerated Size:Q", legend=None, scale=alt.Scale(range=[100, 10000])),
+        color=alt.Color("Type:N", legend=alt.Legend(title="Model Type")),
+        tooltip=["Type", "CO₂ cost (kg):Q", "Average:Q"]
+    ).properties(
+        title="Relative Carbon Footprint of AI Models (Packed Circles)",
+        width=700,
+        height=500
+    )
+
+    st.altair_chart(carbon_bubbles, use_container_width=True)
 
 
 # Ensure 'Upload To Hub Date' is datetime
