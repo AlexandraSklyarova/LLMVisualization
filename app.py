@@ -376,16 +376,16 @@ st.altair_chart(combined_chart, use_container_width=True)
 grouped = grouped.rename(columns={"Hub ❤️": "Hub_Score", "Average ⬆️": "Average_Score"})
 
 # Manually bin the data
-grouped["Satisfaction_Bin"] = (grouped["Hub_Score"] // 20 * 20).astype(int)
-grouped["Average_Bin"] = (grouped["Average_Score"] // 5 * 5).astype(int)
+grouped["Satisfaction_Bin"] = (grouped["Hub_Score"] // 10 * 10).astype(int)
+grouped["Average_Bin"] = (grouped["Average_Score"] // 2 * 2).astype(int)
 
 # Count number of models in each bin
 binned = grouped.groupby(["Satisfaction_Bin", "Average_Bin"]).size().reset_index(name="Count")
 
 # Create the heatmap
 heatmap = alt.Chart(binned).mark_rect().encode(
-    x=alt.X("Satisfaction_Bin:O", title="User Satisfaction (binned by 20)"),
-    y=alt.Y("Average_Bin:O", title="Average Score (binned by 5)"),
+    x=alt.X("Satisfaction_Bin:O", title="User Satisfaction (binned by 10)"),
+    y=alt.Y("Average_Bin:O", title="Average Score (binned by 2)"),
     color=alt.Color("Count:Q", scale=alt.Scale(scheme="blues"), title="Model Count"),
     tooltip=["Satisfaction_Bin", "Average_Bin", "Count"]
 ).properties(
