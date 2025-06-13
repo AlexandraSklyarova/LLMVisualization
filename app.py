@@ -3,6 +3,9 @@ import numpy as np
 import altair as alt
 import streamlit as st
 
+
+st.set_page_config(layout="wide")
+
 df = pd.read_csv("open-llm-leaderboards.csv")  # Update with your actual file path or source
 
 # Clean and preprocess
