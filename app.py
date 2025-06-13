@@ -273,14 +273,81 @@ final_chart = (line_chart + event_rule + event_text).properties(
 st.altair_chart(final_chart, use_container_width=True)
 
 
+#new
+
+
+
+# --- Bubble chart data ---
+bubble_data = df.groupby("Type", as_index=False)["CO₂ cost (kg)"].sum()
+bubble_data["CO₂ Rounded"] = bubble_data["CO₂ cost (kg)"].round().astype(int)
+bubble_data["Size"] = bubble_data["CO₂ cost (kg)"] ** 4
+
+# Ensure consistent layout
+bubble_data = bubble_data.sort_values("Type").reset_index(drop=True)
+bubble_data["x"], bubble_data["y"] = polar_positions(len(bubble_data))
+
+# --- Bubble chart ---
+bubbles = alt.Chart(bubble_data).mark_circle(opacity=0.9).encode(
+    x=alt.X("x:Q", axis=None),
+    y=alt.Y("y:Q", axis=None),
+    size=alt.Size("Size:Q", scale=alt.Scale(range=[4500, 45000]), legend=None),
+    color=alt.Color("Type:N", legend=alt.Legend(title="Model Type")),  # <- keep legend here
+    opacity=alt.condition(type_selection, alt.value(1.0), alt.value(0.2)),
+    tooltip=[
+        alt.Tooltip("Type:N", title="Model Type"),
+        alt.Tooltip("CO₂ cost (kg):Q", title="Total CO₂ (kg)", format=",.0f")
+    ]
+).add_params(type_selection).properties(
+    title="Packed Bubble Chart of CO₂ Emissions by Model Type (Click on Legend to Highlight area in linked CO2 Charts)",
+    width=1000,
+    height=600
+)
+
+# --- Labels ---
+labels = alt.Chart(bubble_data).mark_text(
+    fontSize=11,
+    fontWeight="bold",
+    color="black"
+).encode(
+    x="x:Q",
+    y="y:Q",
+    text="CO₂ Rounded:Q",
+    opacity=alt.condition(type_selection, alt.value(1.0), alt.value(0.2))
+)
+
+bubble_chart = bubbles + labels
+
+# --- Area chart data ---
+monthly = df.groupby(["Month", "Type"])["CO₂ cost (kg)"].sum().reset_index()
+monthly["Cumulative CO₂"] = monthly.sort_values("Month").groupby("Type")["CO₂ cost (kg)"].cumsum()
+
+# --- Area chart ---
+area_chart = alt.Chart(monthly).mark_area(interpolate="monotone").encode(
+    x=alt.X("Month:T", title="Month", axis=alt.Axis(format="%b %Y")),
+    y=alt.Y("Cumulative CO₂:Q", title="Cumulative CO₂ Emissions (kg)", stack="zero"),
+    color=alt.Color("Type:N", legend=None),  # <- suppress legend here
+    opacity=alt.condition(type_selection, alt.value(1.0), alt.value(0.2)),
+    tooltip=[
+        alt.Tooltip("Month:T", title="Month", format="%B %Y"),
+        alt.Tooltip("Type:N", title="Model Type"),
+        alt.Tooltip("Cumulative CO₂:Q", format=",.0f", title="Cumulative CO₂ (kg)")
+    ]
+).add_params(type_selection).properties(
+    title="Cumulative Carbon Emissions Over Time (Stacked by Type)",
+    width=200,
+    height=500
+)
+
+# --- Combine both charts vertically ---
+combined_chart = alt.vconcat(bubble_chart, area_chart).resolve_legend(color="shared")
+st.altair_chart(combined_chart, use_container_width=True)
 
 
 
 
 
 
-
-
+#old
 
 
 df.columns = df.columns.str.strip()
