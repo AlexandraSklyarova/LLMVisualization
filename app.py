@@ -88,8 +88,8 @@ pie = alt.Chart(type_counts).mark_arc(innerRadius=50, outerRadius=150).encode(
     color=alt.Color(field='Type', type='nominal'),
     tooltip=['Type', 'Count']
 ).properties(
-    width=300,
-    height=300,
+    width=350,
+    height=350,
     title='Distribution of Model Types'
 )
 
