@@ -118,37 +118,52 @@ pie
 df.columns = df.columns.str.strip()
 df = df.rename(columns={"Average ⬆️": "Average"})
 
-# Drop rows with missing needed data
+# Drop missing values
 df = df.dropna(subset=["CO₂ cost (kg)", "Type"])
 df["CO₂ cost (kg)"] = pd.to_numeric(df["CO₂ cost (kg)"], errors="coerce")
 df = df.dropna(subset=["CO₂ cost (kg)"])
 
-# --- AGGREGATE by Type ---
+# Group by Type
 agg_df = df.groupby("Type", as_index=False)["CO₂ cost (kg)"].sum()
+agg_df["CO₂ Rounded"] = agg_df["CO₂ cost (kg)"].round().astype(int)
 agg_df["Exaggerated Size"] = agg_df["CO₂ cost (kg)"] ** 2
 
-# Add fake random positions (to mimic packed layout)
-np.random.seed(42)
-agg_df["x"] = np.random.rand(len(agg_df))
-agg_df["y"] = np.random.rand(len(agg_df))
+# Sort by CO₂ and lay out in grid (simulate packed layout)
+agg_df = agg_df.sort_values("CO₂ cost (kg)", ascending=False).reset_index(drop=True)
+n_cols = 5  # Number of bubbles per row
+agg_df["x"] = agg_df.index % n_cols
+agg_df["y"] = -(agg_df.index // n_cols)  # Flip Y axis for visual top-down
 
-# --- CHART ---
-bubble_chart = alt.Chart(agg_df).mark_circle(opacity=0.85).encode(
-    x=alt.X("x:Q", axis=None),
-    y=alt.Y("y:Q", axis=None),
-    size=alt.Size("Exaggerated Size:Q", legend=None, scale=alt.Scale(range=[500, 10000])),
+# Bubble chart
+bubbles = alt.Chart(agg_df).mark_circle(opacity=0.8).encode(
+    x=alt.X("x:O", axis=None),
+    y=alt.Y("y:O", axis=None),
+    size=alt.Size("Exaggerated Size:Q", legend=None, scale=alt.Scale(range=[800, 10000])),
     color=alt.Color("Type:N", legend=alt.Legend(title="Model Type")),
     tooltip=[
         alt.Tooltip("Type:N", title="Model Type"),
         alt.Tooltip("CO₂ cost (kg):Q", title="Total CO₂ (kg)", format=",.0f")
     ]
 ).properties(
-    title="Total CO₂ Emissions by Model Type (One Bubble Each)",
     width=700,
-    height=500
+    height=500,
+    title="Total CO₂ Emissions by Model Type (Bubble Grid)"
 )
 
-st.altair_chart(bubble_chart, use_container_width=True)
+# Labels for CO₂ amount
+labels = alt.Chart(agg_df).mark_text(
+    fontSize=12,
+    fontWeight="bold",
+    color="black"
+).encode(
+    x="x:O",
+    y="y:O",
+    text="CO₂ Rounded:Q"
+)
+
+# Combine and show
+st.altair_chart(bubbles + labels, use_container_width=True)
+
 
 
 # Ensure 'Upload To Hub Date' is datetime
