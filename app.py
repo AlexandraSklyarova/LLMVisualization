@@ -1,125 +1,104 @@
 import streamlit as st
 import pandas as pd
 import altair as alt
-import numpy as np
 
-st.set_page_config(page_title="LLM Leaderboard Dashboard", layout="wide")
+# Set wide layout
+st.set_page_config(layout="wide", page_title="LLM Leaderboard Dashboard")
 
-# Load and clean data
+# Load data
 df = pd.read_csv("open-llm-leaderboards.csv")
+
+# Clean and preprocess
 df.columns = df.columns.str.strip()
+df['Submission Date'] = pd.to_datetime(df['Submission Date'], errors='coerce')
 
-# --- Helper: Column matcher ---
-def find_column(possible_names):
-    for name in possible_names:
-        for col in df.columns:
-            if col.lower().replace(" ", "_") == name.lower().replace(" ", "_"):
-                return col
-    return None
+# Filter out missing types or scores
+df = df[df['Type'].notna()]
 
-# --- Detect columns ---
-model_col = find_column(["model", "model_name", "Model Name"])
-date_col = find_column(["submission_date", "date", "created_at"])
-co2_col = find_column(["carbon_footprint", "co2", "carbon"])
-user_score_col = find_column(["user_score", "user rating", "satisfaction"])
-score_cols = [find_column([s]) for s in ["IFEval", "BBH", "MUSR", "MATH LvL5", "GPQA"]]
-score_cols = [col for col in score_cols if col and col in df.columns and df[col].dtype in [np.float64, np.int64]]
+# Sidebar filters
+st.sidebar.header("Filters")
 
-# --- Sidebar info ---
-st.sidebar.write("🧠 Detected Columns:")
-st.sidebar.write(f"Model: {model_col}")
-st.sidebar.write(f"Date: {date_col}")
-st.sidebar.write(f"CO₂: {co2_col}")
-st.sidebar.write(f"User Score: {user_score_col}")
-st.sidebar.write(f"Scores: {score_cols}")
+# Date filter
+if df['Submission Date'].notna().any():
+    min_date = df['Submission Date'].min()
+    max_date = df['Submission Date'].max()
+    date_range = st.sidebar.slider("Submission Date Range:",
+                                   min_value=min_date.date(),
+                                   max_value=max_date.date(),
+                                   value=(min_date.date(), max_date.date()))
+    df = df[(df['Submission Date'].dt.date >= date_range[0]) & (df['Submission Date'].dt.date <= date_range[1])]
 
-# Add average score column
-if score_cols:
-    df["Average Score"] = df[score_cols].mean(axis=1)
+# Type filter
+type_options = df["Type"].unique().tolist()
+selected_types = st.sidebar.multiselect("Select Model Types:", options=type_options, default=type_options)
+df = df[df["Type"].isin(selected_types)]
 
-# Filter: models
-if model_col:
-    models = df[model_col].dropna().unique().tolist()
-    selected_models = st.sidebar.multiselect("Select models:", models, default=models[:5])
-    df = df[df[model_col].isin(selected_models)]
+# Score columns
+score_cols = ['IFEval', 'BBH', 'MATH Lvl 5', 'GPQA', 'MUSR', 'Average ⬆️']
 
-# Filter: date (SAFE)
-if date_col and date_col in df.columns:
-    df[date_col] = pd.to_datetime(df[date_col], errors="coerce")
-    valid_dates = df[date_col].dropna()
-    if not valid_dates.empty:
-        min_date, max_date = valid_dates.min(), valid_dates.max()
-        if pd.notnull(min_date) and pd.notnull(max_date):
-            date_range = st.sidebar.slider(
-                "Filter by Submission Date:",
-                min_value=min_date.to_pydatetime(),
-                max_value=max_date.to_pydatetime(),
-                value=(min_date.to_pydatetime(), max_date.to_pydatetime())
-            )
-            df = df[(df[date_col] >= date_range[0]) & (df[date_col] <= date_range[1])]
+# Sidebar: Minimum Average Score
+min_score = st.sidebar.slider("Minimum Average Score", float(df['Average ⬆️'].min()), float(df['Average ⬆️'].max()), float(df['Average ⬆️'].min()))
+df = df[df['Average ⬆️'] >= min_score]
 
-# --- Main ---
-st.title("🤖 Open LLM Leaderboard Dashboard")
+# Aggregated by Type
+grouped = df.groupby("Type").agg({
+    "IFEval": "mean",
+    "BBH": "mean",
+    "MATH Lvl 5": "mean",
+    "GPQA": "mean",
+    "MUSR": "mean",
+    "Average ⬆️": "mean",
+    "Hub ❤️": "mean",
+    "CO₂ cost (kg)": "mean",
+    "Model": "count"
+}).reset_index().rename(columns={"Model": "Model Count"})
 
-# 1. Radar chart
-if model_col and len(score_cols) >= 3:
-    st.subheader("📊 Model Scores (Radar)")
-    radar_data = df[[model_col] + score_cols].dropna()
-    radar_melt = radar_data.melt(id_vars=model_col, var_name="Metric", value_name="Score")
-    radar_chart = alt.Chart(radar_melt).mark_line(point=True).encode(
-        theta=alt.Theta("Metric:N", sort=score_cols),
-        radius=alt.Radius("Score:Q"),
-        color=f"{model_col}:N"
-    ).properties(height=400)
-    st.altair_chart(radar_chart, use_container_width=True)
+st.title("💡 Open LLM Leaderboard — Streamlit Dashboard")
 
-# 2. CO2 vs Avg Score
-if co2_col and "Average Score" in df.columns:
-    st.subheader("🌍 CO₂ vs. Average Score")
-    scatter = alt.Chart(df).mark_circle(size=70).encode(
-        x=f"{co2_col}:Q",
-        y="Average Score:Q",
-        color=f"{model_col}:N",
-        tooltip=[model_col, co2_col, "Average Score"]
-    ).interactive()
-    st.altair_chart(scatter, use_container_width=True)
+# Bar Chart: Average Scores by Type
+score_chart = alt.Chart(grouped).transform_fold(
+    score_cols,
+    as_=["Metric", "Score"]
+).mark_bar().encode(
+    x=alt.X("Metric:N", title="Evaluation Metric"),
+    y=alt.Y("Score:Q", title="Average Score"),
+    color=alt.Color("Type:N"),
+    column=alt.Column("Type:N", title="Model Type")
+).properties(title="Evaluation Metrics by Model Type").interactive()
 
-# 3. Score over time
-if date_col and "Average Score" in df.columns and not df[date_col].isna().all():
-    st.subheader("📈 Performance Over Time")
-    line = alt.Chart(df).mark_line(point=True).encode(
-        x=f"{date_col}:T",
-        y="Average Score:Q",
-        color=f"{model_col}:N",
-        tooltip=[model_col, "Average Score"]
-    ).interactive()
-    st.altair_chart(line, use_container_width=True)
+st.altair_chart(score_chart, use_container_width=True)
 
-# 4. Correlation heatmap
-if len(score_cols) >= 2:
-    st.subheader("📐 Score Correlation")
-    corr = df[score_cols].corr()
-    corr_df = corr.stack().reset_index()
-    corr_df.columns = ['Metric1', 'Metric2', 'Correlation']
-    heatmap = alt.Chart(corr_df).mark_rect().encode(
-        x="Metric1:O",
-        y="Metric2:O",
-        color=alt.Color("Correlation:Q", scale=alt.Scale(scheme="purplegreen")),
-        tooltip=["Metric1", "Metric2", "Correlation"]
-    )
-    st.altair_chart(heatmap, use_container_width=True)
+# Chart: CO₂ Emissions vs Average Score
+scatter = alt.Chart(grouped).mark_circle(size=120).encode(
+    x=alt.X("CO₂ cost (kg):Q", title="CO₂ Emissions (kg)"),
+    y=alt.Y("Average ⬆️:Q", title="Average Score"),
+    color="Type:N",
+    tooltip=["Type", "Average ⬆️", "CO₂ cost (kg)", "Model Count"]
+).properties(title="Model Type Efficiency (Score vs CO₂)").interactive()
 
-# 5. User Score Histogram
-if user_score_col and user_score_col in df.columns:
-    st.subheader("👍 User Satisfaction Distribution")
-    hist = alt.Chart(df).mark_bar().encode(
-        x=alt.X(f"{user_score_col}:Q", bin=True),
-        y="count()",
-        color=f"{model_col}:N",
-        tooltip=["count()"]
-    ).interactive()
-    st.altair_chart(hist, use_container_width=True)
+st.altair_chart(scatter, use_container_width=True)
 
-# 6. Data Table
-with st.expander("🔍 View Data"):
-    st.dataframe(df.reset_index(drop=True))
+# Chart: User Satisfaction vs Score
+satisfaction = alt.Chart(grouped).mark_circle(size=120).encode(
+    x=alt.X("Hub ❤️:Q", title="User Satisfaction (Hub ❤️)"),
+    y=alt.Y("Average ⬆️:Q", title="Average Score"),
+    color="Type:N",
+    tooltip=["Type", "Hub ❤️", "Average ⬆️"]
+).properties(title="User Satisfaction vs Average Score").interactive()
+
+st.altair_chart(satisfaction, use_container_width=True)
+
+# Chart: Model Count by Type
+bar_count = alt.Chart(grouped).mark_bar().encode(
+    x=alt.X("Type:N", sort="-y"),
+    y=alt.Y("Model Count:Q"),
+    color="Type:N",
+    tooltip=["Model Count"]
+).properties(title="Number of Models by Type")
+
+st.altair_chart(bar_count, use_container_width=True)
+
+# Raw Data Toggle
+with st.expander("🔍 Show Raw Filtered Data"):
+    st.dataframe(df.sort_values("Average ⬆️", ascending=False))
+
