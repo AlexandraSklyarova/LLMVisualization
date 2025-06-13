@@ -385,45 +385,34 @@ st.altair_chart(final_chart, use_container_width=True)
 df.columns = df.columns.str.strip()
 df = df.rename(columns={"Average ⬆️": "Average"})
 df = df.dropna(subset=["Hub ❤️", "Average", "Type"])
-
 df["Hub ❤️"] = pd.to_numeric(df["Hub ❤️"], errors="coerce")
 df["Average"] = pd.to_numeric(df["Average"], errors="coerce")
 df = df.dropna(subset=["Hub ❤️", "Average"])
 
-# --- BASE SCATTER ---
-base = alt.Chart(df).encode(
-    x=alt.X("Hub ❤️:Q", title="User Satisfaction"),
-    y=alt.Y("Average:Q", title="Average Score"),
-    color=alt.Color("Type:N", legend=alt.Legend(title="Model Type")),
-    tooltip=["Type", "Hub ❤️", "Average"]
+# --- Heatmap (Binned counts) ---
+heatmap = alt.Chart(df).mark_rect().encode(
+    x=alt.X("Hub ❤️:Q", bin=alt.Bin(maxbins=20), title="User Satisfaction"),
+    y=alt.Y("Average:Q", bin=alt.Bin(maxbins=20), title="Average Score"),
+    color=alt.Color("count():Q", scale=alt.Scale(scheme="blues"), title="Model Count"),
+    tooltip=["count():Q"]
 )
 
-# --- POINTS ---
-points = base.mark_circle(size=90)
-
-# --- REGRESSION LINE ---
-trend = base.transform_regression("Hub ❤️", "Average").mark_line(color="black", strokeDash=[4, 4])
-
-# --- MARGINAL HISTOGRAMS ---
+# --- Marginal histograms ---
 x_hist = alt.Chart(df).mark_bar(opacity=0.3).encode(
-    x=alt.X("Hub ❤️:Q", bin=True, title="User Satisfaction"),
+    x=alt.X("Hub ❤️:Q", bin=alt.Bin(maxbins=20), title="User Satisfaction"),
     y=alt.Y("count():Q", title=None)
 ).properties(height=80)
 
 y_hist = alt.Chart(df).mark_bar(opacity=0.3).encode(
     x=alt.X("count():Q", title=None),
-    y=alt.Y("Average:Q", bin=True, title="Average Score")
+    y=alt.Y("Average:Q", bin=alt.Bin(maxbins=20), title="Average Score")
 ).properties(width=80)
 
-# --- COMBINE ---
-scatter_with_trend = points + trend
-main_chart = alt.hconcat(scatter_with_trend, y_hist)
-full_chart = alt.vconcat(x_hist, main_chart).resolve_axis(x='shared', y='shared').properties(
-    title="Correlation Between User Satisfaction and Average Score"
+# --- Combine all charts ---
+main = alt.hconcat(heatmap, y_hist)
+final = alt.vconcat(x_hist, main).resolve_axis(x='shared', y='shared').properties(
+    title="Density Heatmap: User Satisfaction vs Average Score"
 )
 
-# --- SHOW ---
-st.altair_chart(full_chart, use_container_width=True)
-
-
-
+# --- Display in Streamlit ---
+st.altair_chart(final, use_container_width=True)
