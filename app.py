@@ -11,21 +11,21 @@ df = pd.read_csv("open-llm-leaderboards.csv")
 
 # Clean and preprocess
 df.columns = df.columns.str.strip()
-df['Submission Date'] = pd.to_datetime(df['Submission Date'], errors='coerce')
+df['Upload To Hub Date'] = pd.to_datetime(df['Upload To Hub Date'], errors='coerce')
 df = df[df['Type'].notna()]
 
 # Sidebar filters
 st.sidebar.header("Filters")
 
 # Date filter
-if df['Submission Date'].notna().any():
-    min_date = df['Submission Date'].min()
-    max_date = df['Submission Date'].max()
-    date_range = st.sidebar.slider("Submission Date Range:",
+if df['Upload To Hub Date'].notna().any():
+    min_date = df['Upload To Hub Date'].min()
+    max_date = df['Upload To Hub Date'].max()
+    date_range = st.sidebar.slider("Upload To Hub Date:",
                                    min_value=min_date.date(),
                                    max_value=max_date.date(),
                                    value=(min_date.date(), max_date.date()))
-    df = df[(df['Submission Date'].dt.date >= date_range[0]) & (df['Submission Date'].dt.date <= date_range[1])]
+    df = df[(df['Upload To Hub Date'].dt.date >= date_range[0]) & (df['Upload To Hub Date'].dt.date <= date_range[1])]
 
 # Type filter
 type_options = df["Type"].unique().tolist()
