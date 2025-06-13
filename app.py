@@ -390,7 +390,6 @@ st.altair_chart(final_chart, use_container_width=True)
 
 #new
 
-df = pd.read_csv("open-llm-leaderboards.csv")
 df.columns = df.columns.str.strip()
 df = df.rename(columns={"Average ⬆️": "Average"})
 
