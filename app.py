@@ -69,33 +69,31 @@ score_chart = alt.Chart(grouped).transform_fold(
 
 st.altair_chart(score_chart, use_container_width=True)
 
-# Chart: CO₂ Emissions vs Average Score
-scatter = alt.Chart(grouped).mark_circle(size=120).encode(
-    x=alt.X("CO₂ cost (kg):Q", title="CO₂ Emissions (kg)"),
-    y=alt.Y("Average ⬆️:Q", title="Average Score"),
-    color="Type:N",
-    tooltip=["Type", "Average ⬆️", "CO₂ cost (kg)", "Model Count"]
-).properties(title="Model Type Efficiency (Score vs CO₂)").interactive()
 
-st.altair_chart(scatter, use_container_width=True)
 
-# Chart: User Satisfaction vs Score
-satisfaction = alt.Chart(grouped).mark_circle(size=120).encode(
-    x=alt.X("Hub ❤️:Q", title="User Satisfaction (Hub ❤️)"),
-    y=alt.Y("Average ⬆️:Q", title="Average Score"),
-    color="Type:N",
-    tooltip=["Type", "Hub ❤️", "Average ⬆️"]
-).properties(title="User Satisfaction vs Average Score").interactive()
 
-st.altair_chart(satisfaction, use_container_width=True)
 
-# Chart: Model Count by Type
+
 df.columns = df.columns.str.strip()
 df['Type'] = df['Type'].astype(str)
 
-# Count the number of entries per Type
+# Count entries per Type
 type_counts = df['Type'].value_counts().reset_index()
 type_counts.columns = ['Type', 'Count']
+type_counts["Percent"] = type_counts["Count"] / type_counts["Count"].sum()
+
+# Calculate angles for label placement
+type_counts["startAngle"] = type_counts["Percent"].cumsum() - type_counts["Percent"]
+type_counts["endAngle"] = type_counts["Percent"].cumsum()
+type_counts["midAngle"] = (type_counts["startAngle"] + type_counts["endAngle"]) / 2
+
+# Convert mid-angles to radians
+type_counts["midAngle_rad"] = 2 * np.pi * type_counts["midAngle"]
+
+# Label position: slightly outside the pie
+label_radius = 120
+type_counts["x"] = label_radius * np.cos(type_counts["midAngle_rad"])
+type_counts["y"] = label_radius * np.sin(type_counts["midAngle_rad"])
 
 # Pie chart
 pie = alt.Chart(type_counts).mark_arc(innerRadius=50, outerRadius=100).encode(
@@ -108,7 +106,19 @@ pie = alt.Chart(type_counts).mark_arc(innerRadius=50, outerRadius=100).encode(
     title='Distribution of Model Types'
 )
 
-pie
+# Text labels outside the pie
+labels = alt.Chart(type_counts).mark_text(
+    align='center',
+    fontSize=12,
+    fontWeight="bold"
+).encode(
+    x=alt.X('x:Q', axis=None),
+    y=alt.Y('y:Q', axis=None),
+    text=alt.Text('Count:Q')
+)
+
+# Combine
+st.altair_chart(pie + labels, use_container_width=True)
 
 
 
