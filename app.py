@@ -119,55 +119,42 @@ long_df = grouped.melt(
     value_name="Score"
 )
 
-# --- Create a global metric selection (shared across all charts) ---
-metric_selection = alt.selection_point(fields=["Metric"], name="metricClick")
+# --- Create selection ---
+metric_selection = alt.selection_point(fields=["Metric"])
 
-# Unique Types
-types = long_df["Type"].unique().tolist()
-
-# Chunk helper
-def chunks(lst, n):
-    for i in range(0, len(lst), n):
-        yield lst[i:i + n]
-
-# Base chart uses all data, filtered per chart by "Type"
-base = alt.Chart(long_df).encode(
+# --- Base chart with faceting ---
+base = alt.Chart(long_df).mark_bar().encode(
     x=alt.X("Metric:N", title="Evaluation Metric"),
     y=alt.Y("Score:Q", title="Avg Score"),
     color=alt.Color("Metric:N", legend=None),
     opacity=alt.condition(metric_selection, alt.value(1.0), alt.value(0.2)),
-    tooltip=[
-        alt.Tooltip("Type:N", title="Model Type"),
-        alt.Tooltip("Metric:N", title="Metric"),
-        alt.Tooltip("Score:Q", format=".2f", title="Score")
-    ]
-).add_params(metric_selection)
+    tooltip=["Type:N", "Metric:N", alt.Tooltip("Score:Q", format=".2f")]
+).add_params(
+    metric_selection
+).properties(
+    width=150,
+    height=300
+)
 
-# Draw charts
-for row_types in chunks(types, 3):
-    cols = st.columns(len(row_types))
-    for i, t in enumerate(row_types):
-        # Use base chart and filter by Type
-        chart = base.transform_filter(
-            alt.datum.Type == t
-        )
+# --- Add labels layer ---
+labels = alt.Chart(long_df).mark_text(
+    align="center",
+    baseline="bottom",
+    dy=-3,
+    fontSize=11
+).encode(
+    x="Metric:N",
+    y="Score:Q",
+    text=alt.Text("Score:Q", format=".2f"),
+    opacity=alt.condition(metric_selection, alt.value(1.0), alt.value(0.2))
+)
 
-        composed = alt.layer(
-            chart.mark_bar(),
-            chart.mark_text(
-                align="center",
-                baseline="bottom",
-                dy=-3,
-                fontSize=11
-            ).encode(text=alt.Text("Score:Q", format=".2f"))
-        ).properties(
-            title=t,
-            width=400,
-            height=500
-        )
+# --- Combine chart and labels, then facet by Type ---
+chart = (base + labels).facet(
+    column=alt.Column("Type:N", title=None)
+)
 
-        # Show in Streamlit
-        cols[i].altair_chart(composed, use_container_width=True)
+st.altair_chart(chart, use_container_width=True)
 
 
 
