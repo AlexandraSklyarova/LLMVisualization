@@ -396,17 +396,19 @@ st.altair_chart(final_chart, use_container_width=True)
 df.columns = df.columns.str.strip()
 df = df.rename(columns={"Average ⬆️": "Average"})
 
-# Keep relevant columns and drop missing values
 df = df.dropna(subset=["Hub ❤️", "Average", "Type"])
 df["Hub ❤️"] = pd.to_numeric(df["Hub ❤️"], errors="coerce")
 df["Average"] = pd.to_numeric(df["Average"], errors="coerce")
 df = df.dropna(subset=["Hub ❤️", "Average"])
 
-# --- ENSURE NON-EMPTY DATAFRAME ---
+# Debug: show filtered data shape
+st.write("Filtered Data Shape:", df.shape)
+st.write(df.head())
+
+# Only run chart if data remains
 if df.empty:
     st.warning("No data available for heatmap after filtering.")
 else:
-    # --- HEATMAP ---
     heatmap = alt.Chart(df).mark_rect().encode(
         x=alt.X("Hub ❤️:Q", bin=alt.Bin(maxbins=20), title="User Satisfaction"),
         y=alt.Y("Average:Q", bin=alt.Bin(maxbins=20), title="Average Score"),
@@ -414,7 +416,6 @@ else:
         tooltip=[alt.Tooltip("count():Q", title="Model Count")]
     ).properties(width=500, height=400)
 
-    # --- MARGINAL HISTOGRAMS ---
     x_hist = alt.Chart(df).mark_bar(opacity=0.4).encode(
         x=alt.X("Hub ❤️:Q", bin=alt.Bin(maxbins=20), title="User Satisfaction"),
         y=alt.Y("count():Q", title=None)
@@ -425,11 +426,11 @@ else:
         y=alt.Y("Average:Q", bin=alt.Bin(maxbins=20), title="Average Score")
     ).properties(width=80)
 
-    # --- COMBINE ---
     main = alt.hconcat(heatmap, y_hist)
     final = alt.vconcat(x_hist, main).resolve_axis(x='shared', y='shared').properties(
         title="Density Heatmap: User Satisfaction vs Average Score"
     )
 
-    # --- DISPLAY ---
-    st.altair_chart(final, use_container_width=True)
+    # Wrap in container in case of rendering issue
+    with st.container():
+        st.altair_chart(final, use_container_width=True)
