@@ -401,30 +401,32 @@ df["Hub ❤️"] = pd.to_numeric(df["Hub ❤️"], errors="coerce")
 df["Average"] = pd.to_numeric(df["Average"], errors="coerce")
 df = df.dropna(subset=["Hub ❤️", "Average"])
 
-# Ensure there's data left
+# --- Sanity check ---
 if df.empty:
     st.warning("No data available for heatmap after filtering.")
 else:
-    # --- Heatmap (Binned counts) ---
+    st.write("Heatmap data preview", df[["Hub ❤️", "Average"]].describe())
+
+    # --- Heatmap ---
     heatmap = alt.Chart(df).mark_rect().encode(
         x=alt.X("Hub ❤️:Q", bin=alt.Bin(maxbins=20), title="User Satisfaction"),
         y=alt.Y("Average:Q", bin=alt.Bin(maxbins=20), title="Average Score"),
-        color=alt.Color("count():Q", scale=alt.Scale(scheme="blues"), title="Model Count"),
+        color=alt.Color("count():Q", aggregate="count", scale=alt.Scale(scheme="blues"), title="Model Count"),
         tooltip=[alt.Tooltip("count():Q", title="Model Count")]
     ).properties(width=500, height=400)
 
-    # --- Marginal histograms ---
+    # --- Marginal Histograms ---
     x_hist = alt.Chart(df).mark_bar(opacity=0.4).encode(
-        x=alt.X("Hub ❤️:Q", bin=alt.Bin(maxbins=20), title="User Satisfaction"),
-        y=alt.Y("count():Q", title=None)
+        x=alt.X("Hub ❤️:Q", bin=alt.Bin(maxbins=20)),
+        y=alt.Y("count():Q")
     ).properties(height=80)
 
     y_hist = alt.Chart(df).mark_bar(opacity=0.4).encode(
-        x=alt.X("count():Q", title=None),
-        y=alt.Y("Average:Q", bin=alt.Bin(maxbins=20), title="Average Score")
+        x=alt.X("count():Q"),
+        y=alt.Y("Average:Q", bin=alt.Bin(maxbins=20))
     ).properties(width=80)
 
-    # --- Combine all charts ---
+    # --- Compose Layout ---
     main = alt.hconcat(heatmap, y_hist)
     final = alt.vconcat(x_hist, main).resolve_axis(x='shared', y='shared').properties(
         title="Density Heatmap: User Satisfaction vs Average Score"
