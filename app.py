@@ -126,7 +126,7 @@ df = df.dropna(subset=["CO₂ cost (kg)"])
 # Group by Type
 agg_df = df.groupby("Type", as_index=False)["CO₂ cost (kg)"].sum()
 agg_df["CO₂ Rounded"] = agg_df["CO₂ cost (kg)"].round().astype(int)
-agg_df["Exaggerated Size"] = agg_df["CO₂ cost (kg)"] ** 2
+agg_df["Exaggerated Size"] = agg_df["CO₂ cost (kg)"] ** 3
 
 # Sort by CO₂ and lay out in grid (simulate packed layout)
 agg_df = agg_df.sort_values("CO₂ cost (kg)", ascending=False).reset_index(drop=True)
@@ -145,8 +145,8 @@ bubbles = alt.Chart(agg_df).mark_circle(opacity=0.8).encode(
         alt.Tooltip("CO₂ cost (kg):Q", title="Total CO₂ (kg)", format=",.0f")
     ]
 ).properties(
-    width=700,
-    height=500,
+    width=200,
+    height=200,
     title="Total CO₂ Emissions by Model Type (Bubble Grid)"
 )
 
