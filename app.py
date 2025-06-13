@@ -1,95 +1,116 @@
 import streamlit as st
 import pandas as pd
 import altair as alt
-from datetime import datetime
+import numpy as np
 
-# --- Load Data ---
+st.set_page_config(page_title="LLM Leaderboard Dashboard", layout="wide")
+
+# Load the data
 df = pd.read_csv("open-llm-leaderboards.csv")
 
-# --- Preprocess ---
-st.write("Available columns:", df.columns.tolist())
-df["submission_date"] = pd.to_datetime(df["submission_date"], errors='coerce')
-df["average_score"] = df[["IFEval_score", "BBH_score", "MUSR_score", "MATH_level_5_score", "GPQA_score"]].mean(axis=1)
+# Show column names for debugging
+st.sidebar.write("📌 Available columns:", df.columns.tolist())
 
-# --- Sidebar Filters ---
-st.sidebar.header("Filters")
-model_types = st.sidebar.multiselect("Select Model Type", options=df.model_type.unique(), default=df.model_type.unique())
-architectures = st.sidebar.multiselect("Select Architecture", options=df.architecture.unique(), default=df.architecture.unique())
-moe = st.sidebar.radio("Mixture of Experts (MoE)?", ["All", True, False], index=0)
-date_range = st.sidebar.date_input("Submission Date Range", [df.submission_date.min(), df.submission_date.max()])
+# Optional: Parse date column if it exists
+if "submission_date" in df.columns:
+    df["submission_date"] = pd.to_datetime(df["submission_date"], errors='coerce')
 
-# Apply filters
-filtered = df[
-    df.model_type.isin(model_types) &
-    df.architecture.isin(architectures) &
-    (df.submission_date >= pd.to_datetime(date_range[0])) &
-    (df.submission_date <= pd.to_datetime(date_range[1]))
-]
-if moe != "All":
-    filtered = filtered[filtered.moe == moe]
+st.title("🤖 Open LLM Leaderboard Dashboard")
+st.markdown("Explore performance, environmental impact, and user ratings of top LLMs.")
 
-# --- Layout ---
-st.title("📊 Open LLM Leaderboard Dashboard")
-st.markdown("Explore model performance, environmental impact, and user engagement.")
+# Sidebar filters
+model_options = df["model_name"].unique().tolist()
+selected_models = st.sidebar.multiselect("Select models to compare:", model_options, default=model_options[:6])
 
-# --- Score Comparison Radar Chart ---
-st.subheader("Radar Chart: Score Comparison")
-selected_models = st.multiselect("Select Models", options=filtered.model.unique(), default=filtered.model.head(3))
-radar_data = filtered[filtered.model.isin(selected_models)]
-radar = radar_data.melt(id_vars=["model"], value_vars=["IFEval_score", "BBH_score", "MUSR_score", "MATH_level_5_score", "GPQA_score"], 
-                         var_name="Score Type", value_name="Score")
-radar_chart = alt.Chart(radar).mark_line(point=True).encode(
-    theta=alt.Theta("Score Type:N", sort=None),
-    radius=alt.Radius("Score:Q", scale=alt.Scale(type='linear', zero=True)),
-    color="model:N"
-).properties(height=400)
-st.altair_chart(radar_chart, use_container_width=True)
+filtered_df = df[df["model_name"].isin(selected_models)]
 
-# --- Timeline of Average Score ---
-st.subheader("Timeline: Average Score Over Time")
-time_data = filtered.groupby("submission_date")["average_score"].mean().reset_index()
-time_chart = alt.Chart(time_data).mark_line().encode(
-    x="submission_date:T",
-    y="average_score:Q"
-).properties(height=300)
-st.altair_chart(time_chart, use_container_width=True)
+# Optional date filter
+if "submission_date" in df.columns:
+    min_date = filtered_df["submission_date"].min()
+    max_date = filtered_df["submission_date"].max()
+    date_range = st.sidebar.slider("Filter by submission date:", min_value=min_date, max_value=max_date, value=(min_date, max_date))
+    filtered_df = filtered_df[
+        (filtered_df["submission_date"] >= date_range[0]) &
+        (filtered_df["submission_date"] <= date_range[1])
+    ]
 
-# --- CO₂ vs. Average Score ---
-st.subheader("CO₂ Emissions vs. Average Score")
-scatter = alt.Chart(filtered).mark_circle(size=100, opacity=0.6).encode(
-    x="carbon_cost_kg:Q",
-    y="average_score:Q",
-    size="params_b:Q",
-    color="model_type:N",
-    tooltip=["model", "carbon_cost_kg", "average_score", "params_b"]
-).interactive().properties(height=400)
-st.altair_chart(scatter, use_container_width=True)
+# Define score metrics
+score_cols = ["IFEval", "BBH", "MUSR", "MATH LvL5", "GPQA"]
+valid_scores = [col for col in score_cols if col in df.columns]
 
-# --- Correlation Heatmap ---
-st.subheader("Correlation Heatmap of Scores & Metrics")
-metrics = filtered[["IFEval_score", "BBH_score", "MUSR_score", "MATH_level_5_score", "GPQA_score", "carbon_cost_kg", "average_score"]]
-corr_df = metrics.corr().reset_index().melt("index")
-heatmap = alt.Chart(corr_df).mark_rect().encode(
-    x="index:N",
-    y="variable:N",
-    color="value:Q"
-) + alt.Chart(corr_df).mark_text(baseline='middle').encode(
-    x="index:N",
-    y="variable:N",
-    text=alt.Text("value:Q", format=".2f")
-)
-st.altair_chart(heatmap, use_container_width=True)
+# 1. Radar Chart of Scores
+if len(valid_scores) >= 3:
+    st.subheader("📊 Model Performance Comparison (Radar Plot)")
+    radar_data = filtered_df[["model_name"] + valid_scores].dropna()
 
-# --- User Engagement vs Score ---
-st.subheader("User Engagement vs. Average Score")
-bar = alt.Chart(filtered).mark_bar().encode(
-    x=alt.X("average_score:Q", bin=alt.Bin(maxbins=15)),
-    y="count():Q",
-    color=alt.Color("❤️_on_HuggingFace:Q", scale=alt.Scale(scheme='redpurple')),
-    tooltip=["count()"]
-).properties(height=300)
-st.altair_chart(bar, use_container_width=True)
+    radar_melt = radar_data.melt(id_vars=["model_name"], var_name="Metric", value_name="Score")
 
-# --- Data Table ---
-st.subheader("Explore Raw Model Data")
-st.dataframe(filtered[["model", "submission_date", "average_score", "carbon_cost_kg", "params_b", "❤️_on_HuggingFace"]].sort_values("average_score", ascending=False))
+    radar_chart = alt.Chart(radar_melt).mark_line(point=True).encode(
+        theta=alt.Theta("Metric:N", sort=valid_scores),
+        radius=alt.Radius("Score:Q", scale=alt.Scale(type="linear", zero=True)),
+        color="model_name:N"
+    ).properties(height=400, width=400)
+
+    st.altair_chart(radar_chart, use_container_width=True)
+
+# 2. CO₂ Emissions vs Score
+if "carbon_footprint" in df.columns and "Average Score" not in df.columns:
+    df["Average Score"] = df[valid_scores].mean(axis=1)
+
+if "carbon_footprint" in df.columns:
+    st.subheader("🌍 Environmental Impact vs Score")
+    scatter = alt.Chart(filtered_df).mark_circle(size=100).encode(
+        x="carbon_footprint:Q",
+        y="Average Score:Q",
+        tooltip=["model_name", "carbon_footprint", "Average Score"],
+        color="model_name:N"
+    ).interactive().properties(height=400)
+
+    st.altair_chart(scatter, use_container_width=True)
+
+# 3. Time Series of Score (if date column exists)
+if "submission_date" in df.columns:
+    st.subheader("📈 Model Performance Over Time")
+    time_data = filtered_df.copy()
+    time_data["Average Score"] = time_data[valid_scores].mean(axis=1)
+
+    line = alt.Chart(time_data).mark_line(point=True).encode(
+        x="submission_date:T",
+        y="Average Score:Q",
+        color="model_name:N",
+        tooltip=["model_name", "submission_date", "Average Score"]
+    ).interactive().properties(height=400)
+
+    st.altair_chart(line, use_container_width=True)
+
+# 4. Correlation Heatmap
+if len(valid_scores) >= 2:
+    st.subheader("🔗 Score Correlation Heatmap")
+    corr_data = df[valid_scores].corr()
+    corr_df = corr_data.stack().reset_index()
+    corr_df.columns = ['Metric1', 'Metric2', 'Correlation']
+
+    heatmap = alt.Chart(corr_df).mark_rect().encode(
+        x="Metric1:O",
+        y="Metric2:O",
+        color=alt.Color("Correlation:Q", scale=alt.Scale(scheme="purplebluegreen")),
+        tooltip=["Metric1", "Metric2", "Correlation"]
+    ).properties(height=400)
+
+    st.altair_chart(heatmap, use_container_width=True)
+
+# 5. User Satisfaction Distribution
+if "user_score" in df.columns:
+    st.subheader("🧑‍💻 User Satisfaction Distribution")
+    hist = alt.Chart(filtered_df).mark_bar().encode(
+        x=alt.X("user_score:Q", bin=alt.Bin(maxbins=20)),
+        y="count()",
+        color="model_name:N",
+        tooltip=["count()"]
+    ).interactive().properties(height=300)
+
+    st.altair_chart(hist, use_container_width=True)
+
+# 6. Raw Data Table
+with st.expander("🔍 Explore Raw Data"):
+    st.dataframe(filtered_df.reset_index(drop=True))
