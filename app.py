@@ -151,11 +151,11 @@ st.altair_chart(final_chart, use_container_width=True)
 
 
 
-# Create exaggerated size for better visual separation
-grouped["Exaggerated Size"] = grouped["CO₂ cost (kg)"]**2  # tweak exponent for visual impact
+# Exaggerate circle size to emphasize differences
+grouped["Exaggerated Size"] = grouped["CO₂ cost (kg)"]**2
 
-# Packed circle-like effect: layout with jitter
-packed_circles = alt.Chart(grouped).mark_circle(opacity=0.85).encode(
+# Packed-style bubble chart (random layout)
+carbon_bubbles = alt.Chart(grouped).mark_circle(opacity=0.85).encode(
     x=alt.X('random():Q', axis=None, scale=alt.Scale(zero=False)),
     y=alt.Y('random():Q', axis=None, scale=alt.Scale(zero=False)),
     size=alt.Size('Exaggerated Size:Q', legend=None, scale=alt.Scale(range=[100, 10000])),
@@ -169,27 +169,28 @@ packed_circles = alt.Chart(grouped).mark_circle(opacity=0.85).encode(
     random='random()'
 )
 
-st.altair_chart(packed_circles, use_container_width=True)
+st.altair_chart(carbon_bubbles, use_container_width=True)
 
-# Make sure date is in datetime and grouped by month
-grouped['Date'] = pd.to_datetime(grouped['Date'])  # Replace with real column
+
+grouped = grouped.dropna(subset=["Upload To Hub Date"])
+grouped['Date'] = pd.to_datetime(grouped['Upload To Hub Date'])
 grouped['Month'] = grouped['Date'].dt.to_period('M').dt.to_timestamp()
 
-# Sum emissions per month per type
+# Sum monthly emissions per Type
 monthly_emissions = (
     grouped.groupby(["Month", "Type"])["CO₂ cost (kg)"]
     .sum()
     .reset_index()
 )
 
-# Compute cumulative sum per Type
+# Calculate cumulative CO₂ for each Type
 monthly_emissions["Cumulative CO₂"] = (
     monthly_emissions.sort_values("Month")
     .groupby("Type")["CO₂ cost (kg)"]
     .cumsum()
 )
 
-# Stacked area chart
+# Create stacked area chart
 stacked_area = alt.Chart(monthly_emissions).mark_area(interpolate='monotone').encode(
     x=alt.X("Month:T", title="Month"),
     y=alt.Y("Cumulative CO₂:Q", stack="zero", title="Cumulative CO₂ Emissions (kg)"),
