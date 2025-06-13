@@ -119,28 +119,23 @@ long_df = grouped.melt(
     value_name="Score"
 )
 
-# --- Create selection ---
-metric_selection = alt.selection_point(fields=["Metric"])
+# --- Shared selection ---
+metric_selection = alt.selection_point(fields=["Metric"], bind="legend")  # optional bind
 
-# --- Base chart with faceting ---
+# --- Base bar chart ---
 base = alt.Chart(long_df).mark_bar().encode(
     x=alt.X("Metric:N", title="Evaluation Metric"),
-    y=alt.Y("Score:Q", title="Avg Score"),
-    color=alt.Color("Metric:N", legend=None),
+    y=alt.Y("Score:Q", title="Average Score"),
+    color=alt.Color("Metric:N", legend=alt.Legend(title="Select Metric")),
     opacity=alt.condition(metric_selection, alt.value(1.0), alt.value(0.2)),
     tooltip=["Type:N", "Metric:N", alt.Tooltip("Score:Q", format=".2f")]
-).add_params(
-    metric_selection
-).properties(
-    width=150,
-    height=300
-)
+).add_params(metric_selection)
 
-# --- Add labels layer ---
+# --- Add labels ---
 labels = alt.Chart(long_df).mark_text(
     align="center",
     baseline="bottom",
-    dy=-3,
+    dy=-5,
     fontSize=11
 ).encode(
     x="Metric:N",
@@ -149,11 +144,16 @@ labels = alt.Chart(long_df).mark_text(
     opacity=alt.condition(metric_selection, alt.value(1.0), alt.value(0.2))
 )
 
-# --- Combine chart and labels, then facet by Type ---
+# --- Combine bar and text, then facet by Type ---
 chart = (base + labels).facet(
-    column=alt.Column("Type:N", title=None)
+    column=alt.Column("Type:N", title=None, header=alt.Header(labelAngle=0))
+).resolve_scale(
+    y="independent"
+).properties(
+    title="Scores by Evaluation Metric (Click Metric to Highlight Across All Types)"
 )
 
+# --- Display in Streamlit ---
 st.altair_chart(chart, use_container_width=True)
 
 
