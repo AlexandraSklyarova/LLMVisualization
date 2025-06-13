@@ -205,38 +205,37 @@ pie
 
 df['Upload To Hub Date'] = pd.to_datetime(df['Upload To Hub Date'], errors='coerce')
 df = df.dropna(subset=['Upload To Hub Date', 'Type'])
-
-# Extract month
 df['Month'] = df['Upload To Hub Date'].dt.to_period('M').dt.to_timestamp()
 
-# Count models per month per type
+# --- Monthly Model Count and Cumulative ---
 monthly_counts = (
     df.groupby(['Month', 'Type'])
     .size()
     .reset_index(name='Model Count')
 )
 
-# Compute cumulative count per type
 monthly_counts['Cumulative Models'] = (
     monthly_counts.sort_values('Month')
     .groupby('Type')['Model Count']
     .cumsum()
 )
 
-# Main line chart
-# Main line chart with formatted x-axis and tooltip
+# --- Semantic Zoom Selection ---
+zoom = alt.selection_interval(bind="scales")
+
+# --- Main Line Chart ---
 line_chart = alt.Chart(monthly_counts).mark_line().encode(
-    x=alt.X("Month:T", title="Month", axis=alt.Axis(format="%b %Y")),  # e.g., Jan 2024
+    x=alt.X("Month:T", title="Month", axis=alt.Axis(format="%b %Y")),
     y=alt.Y("Cumulative Models:Q", title="Total Number of Models"),
     color=alt.Color("Type:N", title="Model Type"),
     tooltip=[
-        alt.Tooltip("Month:T", title="Month", format="%B %Y"),  # e.g., January 2024
+        alt.Tooltip("Month:T", title="Month", format="%B %Y"),
         alt.Tooltip("Type:N", title="Model Type"),
         alt.Tooltip("Cumulative Models:Q", title="Cumulative Models", format=",.0f")
     ]
-)
+).add_params(zoom)
 
-# Vertical dashed annotation line for April 2025
+# --- Event Line (April 2024) ---
 event_date = pd.to_datetime("2024-04-01")
 event_rule = alt.Chart(pd.DataFrame({"date": [event_date]})).mark_rule(
     strokeDash=[4, 4],
@@ -245,7 +244,7 @@ event_rule = alt.Chart(pd.DataFrame({"date": [event_date]})).mark_rule(
     x=alt.X("date:T")
 )
 
-# Text label for the event
+# --- Event Label ---
 event_text = alt.Chart(pd.DataFrame({
     "date": [event_date],
     "label": ["Publication of Visualization-of-Thought (VoT)"]
@@ -259,13 +258,13 @@ event_text = alt.Chart(pd.DataFrame({
     color="red"
 ).encode(
     x="date:T",
-    y=alt.value(0),  # anchor at bottom
+    y=alt.value(0),
     text="label:N"
 )
 
-# Combine everything
+# --- Combine and Display ---
 final_chart = (line_chart + event_rule + event_text).properties(
-    title="Cumulative Number of LLM Models Released Over Time",
+    title="Cumulative Number of LLM Models Released Over Time (Zoom Enabled)",
     width=1100,
     height=500
 )
