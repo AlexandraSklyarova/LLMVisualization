@@ -347,10 +347,14 @@ monthly_emissions['Cumulative CO₂'] = (
 
 # Main stacked area chart
 stacked_area = alt.Chart(monthly_emissions).mark_area(interpolate='monotone').encode(
-    x=alt.X("Month:T", title="Month"),
+    x=alt.X("Month:T", title="Month", axis=alt.Axis(format="%b %Y")),  # e.g., Jan 2024
     y=alt.Y("Cumulative CO₂:Q", stack="zero", title="Cumulative CO₂ Emissions (kg)"),
     color=alt.Color("Type:N", title="Model Type"),
-    tooltip=["Month:T", "Type:N", "Cumulative CO₂:Q"]
+    tooltip=[
+        alt.Tooltip("Month:T", title="Month", format="%B %Y"),  # e.g., January 2024
+        alt.Tooltip("Type:N", title="Model Type"),
+        alt.Tooltip("Cumulative CO₂:Q", title="Cumulative CO₂ (kg)", format=",.0f")
+    ]
 )
 
 # Dashed vertical lines for each January
@@ -360,7 +364,7 @@ year_lines = alt.Chart(pd.DataFrame({
     strokeDash=[6, 4],
     color="gray"
 ).encode(
-    x="year:T"
+    x=alt.X("year:T")
 )
 
 # Combine and display
@@ -382,35 +386,39 @@ st.altair_chart(final_chart, use_container_width=True)
 
 df.columns = df.columns.str.strip()
 df = df.rename(columns={"Average ⬆️": "Average"})
+
 df = df.dropna(subset=["Hub ❤️", "Average", "Type"])
 df["Hub ❤️"] = pd.to_numeric(df["Hub ❤️"], errors="coerce")
 df["Average"] = pd.to_numeric(df["Average"], errors="coerce")
 df = df.dropna(subset=["Hub ❤️", "Average"])
 
-# --- Heatmap (Binned counts) ---
-heatmap = alt.Chart(df).mark_rect().encode(
-    x=alt.X("Hub ❤️:Q", bin=alt.Bin(maxbins=20), title="User Satisfaction"),
-    y=alt.Y("Average:Q", bin=alt.Bin(maxbins=20), title="Average Score"),
-    color=alt.Color("count():Q", scale=alt.Scale(scheme="blues"), title="Model Count"),
-    tooltip=["count():Q"]
-)
+# Ensure there's data left
+if df.empty:
+    st.warning("No data available for heatmap after filtering.")
+else:
+    # --- Heatmap (Binned counts) ---
+    heatmap = alt.Chart(df).mark_rect().encode(
+        x=alt.X("Hub ❤️:Q", bin=alt.Bin(maxbins=20), title="User Satisfaction"),
+        y=alt.Y("Average:Q", bin=alt.Bin(maxbins=20), title="Average Score"),
+        color=alt.Color("count():Q", scale=alt.Scale(scheme="blues"), title="Model Count"),
+        tooltip=[alt.Tooltip("count():Q", title="Model Count")]
+    ).properties(width=500, height=400)
 
-# --- Marginal histograms ---
-x_hist = alt.Chart(df).mark_bar(opacity=0.3).encode(
-    x=alt.X("Hub ❤️:Q", bin=alt.Bin(maxbins=20), title="User Satisfaction"),
-    y=alt.Y("count():Q", title=None)
-).properties(height=80)
+    # --- Marginal histograms ---
+    x_hist = alt.Chart(df).mark_bar(opacity=0.4).encode(
+        x=alt.X("Hub ❤️:Q", bin=alt.Bin(maxbins=20), title="User Satisfaction"),
+        y=alt.Y("count():Q", title=None)
+    ).properties(height=80)
 
-y_hist = alt.Chart(df).mark_bar(opacity=0.3).encode(
-    x=alt.X("count():Q", title=None),
-    y=alt.Y("Average:Q", bin=alt.Bin(maxbins=20), title="Average Score")
-).properties(width=80)
+    y_hist = alt.Chart(df).mark_bar(opacity=0.4).encode(
+        x=alt.X("count():Q", title=None),
+        y=alt.Y("Average:Q", bin=alt.Bin(maxbins=20), title="Average Score")
+    ).properties(width=80)
 
-# --- Combine all charts ---
-main = alt.hconcat(heatmap, y_hist)
-final = alt.vconcat(x_hist, main).resolve_axis(x='shared', y='shared').properties(
-    title="Density Heatmap: User Satisfaction vs Average Score"
-)
+    # --- Combine all charts ---
+    main = alt.hconcat(heatmap, y_hist)
+    final = alt.vconcat(x_hist, main).resolve_axis(x='shared', y='shared').properties(
+        title="Density Heatmap: User Satisfaction vs Average Score"
+    )
 
-# --- Display in Streamlit ---
-st.altair_chart(final, use_container_width=True)
+    st.altair_chart(final, use_container_width=True)
