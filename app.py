@@ -120,46 +120,43 @@ long_df = grouped.melt(
     value_name="Score"
 )
 
-# Create selection for model Type
+# --- Shared selection by Type ---
 type_select = alt.selection_point(fields=["Type"])
 
-# Get unique model types
-types = long_df["Type"].unique().tolist()
+# --- Base chart ---
+base = alt.Chart(long_df).encode(
+    x=alt.X("Metric:N", title="Evaluation Metric"),
+    y=alt.Y("Score:Q", title="Avg Score"),
+    color=alt.Color("Metric:N", legend=None),
+    opacity=alt.condition(type_select, alt.value(1.0), alt.value(0.2)),
+    tooltip=["Type", "Metric", "Score"]
+).add_params(
+    type_select
+)
 
-# Chunk types into rows of 3
-def chunks(lst, n):
-    for i in range(0, len(lst), n):
-        yield lst[i:i + n]
+# --- Bar and text layers ---
+bars = base.mark_bar()
+text = base.mark_text(
+    align="center",
+    baseline="bottom",
+    dy=-3,
+    fontSize=11
+).encode(
+    text=alt.Text("Score:Q", format=".2f")
+)
 
-# Build chart for each type and lay out
-for row_types in chunks(types, 3):
-    cols = st.columns(len(row_types))  # create as many columns as needed
-    for i, t in enumerate(row_types):
-        chart = alt.Chart(long_df).transform_filter(
-            alt.datum.Type == t
-        ).encode(
-            x=alt.X("Metric:N", title="Evaluation Metric"),
-            y=alt.Y("Score:Q", title="Avg Score"),
-            color=alt.Color("Metric:N", legend=None),
-            opacity=alt.condition(type_select, alt.value(1.0), alt.value(0.2)),
-            tooltip=["Type", "Metric", "Score"]
-        )
+# --- Combine layers and facet by Type ---
+final_chart = alt.layer(bars, text).facet(
+    column=alt.Column("Type:N", title=None)
+).resolve_scale(
+    y="independent"
+).properties(
+    title="Evaluation Scores by Metric per Model Type",
+    width=180,
+    height=400
+)
 
-        composed = alt.layer(
-            chart.mark_bar(),
-            chart.mark_text(
-                align="center",
-                baseline="bottom",
-                dy=-3,
-                fontSize=11
-            ).encode(text=alt.Text("Score:Q", format=".2f"))
-        ).add_params(type_select).properties(
-            title=t,
-            width=400,
-            height=600
-        )
-
-        cols[i].altair_chart(composed, use_container_width=True)
+st.altair_chart(final_chart, use_container_width=True)
 
 
 
