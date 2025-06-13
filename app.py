@@ -109,6 +109,53 @@ for row_types in chunks(types, 3):
 
 
 
+
+
+#new 
+
+long_df = grouped.melt(
+    id_vars=["Type"],
+    value_vars=score_cols,
+    var_name="Metric",
+    value_name="Score"
+)
+
+# --- Create a selection that highlights one Type ---
+type_select = alt.selection_point(fields=["Type"])
+
+# --- Base chart ---
+base = alt.Chart(long_df).encode(
+    x=alt.X("Metric:N", title="Evaluation Metric"),
+    y=alt.Y("Score:Q", title="Average Score"),
+    color=alt.Color("Metric:N", legend=None),
+    opacity=alt.condition(type_select, alt.value(1.0), alt.value(0.2)),
+    tooltip=["Type", "Metric", "Score"]
+)
+
+# --- Layers ---
+bars = base.mark_bar()
+labels = base.mark_text(
+    align="center",
+    baseline="bottom",
+    dy=-3,
+    fontSize=11
+).encode(text=alt.Text("Score:Q", format=".2f"))
+
+# --- Final chart with facet ---
+chart = alt.layer(bars, labels).add_params(type_select).facet(
+    column=alt.Column("Type:N", title=None)
+).properties(
+    title="Evaluation Metrics per Model Type (Click to Highlight)",
+    bounds="flush"
+)
+
+# --- Show chart ---
+st.altair_chart(chart, use_container_width=True)
+
+
+
+
+
 st.markdown("###  LLM Evaluation Metrics Overview")
 
 evaluation_summary = {
@@ -448,6 +495,7 @@ labels = alt.Chart(bubble_data).mark_text(
     text="CO₂ Rounded:Q",
     opacity=alt.condition(type_selection, alt.value(1.0), alt.value(0.2))
 )
+st.altair_chart(bubble + labels, use_container_width=True)
 
 
 # --- Area chart data ---
@@ -471,9 +519,7 @@ area = alt.Chart(monthly).mark_area(interpolate="monotone").encode(
     height=500
 )
 
-combined_chart = area + bubbles + labels
-
-st.altair_chart(combined_chart, use_container_width=True)
+st.altair_chart(area, use_container_width=True)
 
 
 
