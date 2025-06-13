@@ -223,7 +223,7 @@ line_chart = alt.Chart(monthly_counts).mark_line().encode(
 )
 
 # Vertical dashed annotation line for April 2025
-event_date = pd.to_datetime("2025-04-01")
+event_date = pd.to_datetime("2024-04-01")
 event_rule = alt.Chart(pd.DataFrame({"date": [event_date]})).mark_rule(
     strokeDash=[4, 4],
     color="red"
@@ -234,7 +234,7 @@ event_rule = alt.Chart(pd.DataFrame({"date": [event_date]})).mark_rule(
 # Text label for the event
 event_text = alt.Chart(pd.DataFrame({
     "date": [event_date],
-    "label": ["Introduction of Llama 4 series, Gemini 2.5, OpenAI o4-mini model"]
+    "label": ["Publication of Visualization-of-Thought (VoT) and launch of Gemini 1.5"]
 })).mark_text(
     align="left",
     baseline="top",
@@ -252,8 +252,8 @@ event_text = alt.Chart(pd.DataFrame({
 # Combine everything
 final_chart = (line_chart + event_rule + event_text).properties(
     title="Cumulative Number of LLM Models Released Over Time",
-    width=1000,
-    height=500
+    width=1200,
+    height=600
 )
 
 st.altair_chart(final_chart, use_container_width=True)
@@ -297,7 +297,7 @@ agg_df["x"], agg_df["y"] = polar_positions(len(agg_df), radius_step=0.4)
 bubbles = alt.Chart(agg_df).mark_circle(opacity=0.8).encode(
     x=alt.X("x:Q", axis=None),
     y=alt.Y("y:Q", axis=None),
-    size=alt.Size("Size:Q", scale=alt.Scale(range=[3000, 35000]), legend=None),
+    size=alt.Size("Size:Q", scale=alt.Scale(range=[2500, 30000]), legend=None),
     color=alt.Color("Type:N", legend=alt.Legend(title="Model Type")),
     tooltip=[
         alt.Tooltip("Type:N", title="Model Type"),
@@ -366,7 +366,7 @@ year_lines = alt.Chart(pd.DataFrame({
 # Combine and display
 final_chart = (stacked_area + year_lines).properties(
     title="Accumulating Carbon Emissions from AI Models Over Time (Stacked by Type)",
-    width=1000,
+    width=1500,
     height=800
 )
 
