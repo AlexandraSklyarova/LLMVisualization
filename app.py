@@ -113,44 +113,40 @@ for row_types in chunks(types, 3):
 
 #new 
 
-metric_selection = alt.selection_point(fields=["Metric"], clear="click")
+selected_metric = st.selectbox("Highlight a Metric:", score_cols)
 
-# Get unique model types
-types = long_df["Type"].unique().tolist()
-
-# Helper to chunk types
-def chunks(lst, n):
-    for i in range(0, len(lst), n):
-        yield lst[i:i + n]
-
-# Build chart for each type in chunks of 3 per row
+# --- Generate charts by model Type ---
 for row_types in chunks(types, 3):
     cols = st.columns(len(row_types))
     for i, t in enumerate(row_types):
-        base = alt.Chart(long_df).transform_filter(
+        chart_base = alt.Chart(long_df).transform_filter(
             alt.datum.Type == t
         ).encode(
             x=alt.X("Metric:N", title="Evaluation Metric"),
             y=alt.Y("Score:Q", title="Avg Score"),
             color=alt.Color("Metric:N", legend=None),
-            opacity=alt.condition(metric_selection, alt.value(1.0), alt.value(0.2))
+            opacity=alt.condition(
+                f"datum.Metric === '{selected_metric}'",
+                alt.value(1.0),
+                alt.value(0.2)
+            )
         )
 
-        bars = base.mark_bar()
-        labels = base.mark_text(
+        bars = chart_base.mark_bar()
+        labels = chart_base.mark_text(
             align="center",
             baseline="bottom",
             dy=-3,
             fontSize=11
         ).encode(text=alt.Text("Score:Q", format=".2f"))
 
-        chart = alt.layer(bars, labels).add_params(metric_selection).properties(
+        composed = alt.layer(bars, labels).properties(
             title=t,
             width=400,
             height=600
         )
 
-        cols[i].altair_chart(chart, use_container_width=True)
+        cols[i].altair_chart(composed, use_container_width=True)
 
 
 
