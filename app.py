@@ -115,21 +115,27 @@ pie
 
 
 
-# Exaggerate for visual emphasis
-df["Exaggerated Size"] = df["CO₂ cost (kg)"]**2
+df["Exaggerated Size"] = df["CO₂ cost (kg)"] ** 2
 
+# Filter out NaNs
+df = df.dropna(subset=["CO₂ cost (kg)", "Type", "Average"])
+
+# Precompute random layout positions
+np.random.seed(42)
+df["rand_x"] = np.random.rand(len(df))
+df["rand_y"] = np.random.rand(len(df))
+
+# Build packed-ish circle chart
 carbon_bubbles = alt.Chart(df).mark_circle(opacity=0.85).encode(
-    x=alt.X('random():Q', axis=None, scale=alt.Scale(zero=False)),
-    y=alt.Y('random():Q', axis=None, scale=alt.Scale(zero=False)),
-    size=alt.Size('Exaggerated Size:Q', legend=None, scale=alt.Scale(range=[100, 10000])),
-    color=alt.Color('Type:N', legend=alt.Legend(title='Model Type')),
+    x=alt.X("rand_x:Q", axis=None),
+    y=alt.Y("rand_y:Q", axis=None),
+    size=alt.Size("Exaggerated Size:Q", legend=None, scale=alt.Scale(range=[100, 10000])),
+    color=alt.Color("Type:N", legend=alt.Legend(title="Model Type")),
     tooltip=["Type", "CO₂ cost (kg):Q", "Average:Q"]
 ).properties(
     title="Relative Carbon Footprint of AI Models (Packed Circles)",
     width=700,
     height=500
-).transform_calculate(
-    random='random()'
 )
 
 st.altair_chart(carbon_bubbles, use_container_width=True)
