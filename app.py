@@ -14,7 +14,7 @@ df.columns = df.columns.str.strip()
 df['Submission Date'] = pd.to_datetime(df['Submission Date'], errors='coerce')
 df = df[df['Type'].notna()]
 
-# Sidebar filters
+# --- Streamlit filters ---
 st.set_page_config(layout="wide")
 st.sidebar.header("Filters")
 
@@ -36,64 +36,43 @@ df = df[df["Type"].isin(selected_types)]
 # Score columns
 score_cols = ['IFEval', 'BBH', 'MATH Lvl 5', 'GPQA', 'MUSR', 'Average ⬆️']
 
-# Minimum score filter
+# Minimum Average Score
 min_score = st.sidebar.slider("Minimum Average Score",
                               float(df['Average ⬆️'].min()),
                               float(df['Average ⬆️'].max()),
                               float(df['Average ⬆️'].min()))
 df = df[df['Average ⬆️'] >= min_score]
 
-# Group by type and average scores
-grouped = df.groupby("Type").agg({
-    "IFEval": "mean",
-    "BBH": "mean",
-    "MATH Lvl 5": "mean",
-    "GPQA": "mean",
-    "MUSR": "mean",
-    "Average ⬆️": "mean",
-    "Hub ❤️": "mean",
-    "CO₂ cost (kg)": "mean",
-    "Model": "count"
-}).reset_index().rename(columns={"Model": "Model Count"})
+# --- Aggregate and transform ---
+grouped = df.groupby("Type").agg({col: "mean" for col in score_cols}).reset_index()
+long_df = grouped.melt(id_vars=["Type"], var_name="Metric", value_name="Score")
 
-# Melt into long format for Altair
-long_df = grouped.melt(
-    id_vars=["Type"],
-    value_vars=score_cols,
-    var_name="Metric",
-    value_name="Score"
-)
-
-st.title("💡 Open LLM Leaderboard — Evaluation Metrics by Model Type")
-
-# Base chart
+# --- Bar chart with labels inside a facet ---
 base = alt.Chart(long_df).encode(
-    x=alt.X("Metric:N", title="Evaluation Metric"),
+    x=alt.X("Metric:N", title="Metric"),
     y=alt.Y("Score:Q", title="Average Score"),
     color=alt.Color("Type:N", legend=None)
 )
 
-# Bars
 bars = base.mark_bar()
 
-# Labels on top of bars
-labels = base.mark_text(
+text = base.mark_text(
     align='center',
     baseline='bottom',
-    dy=-3,
+    dy=-2,
     fontSize=11,
-    fontWeight="bold"
+    fontWeight='bold'
 ).encode(
     text=alt.Text("Score:Q", format=".2f")
 )
 
-# Faceted chart
-score_chart = alt.layer(bars, labels).facet(
+# Combine layers, then facet
+score_chart = alt.layer(bars, text).facet(
     column=alt.Column("Type:N", title="Model Type", columns=3),
-    spacing=30
+    spacing=25
 ).resolve_scale(
-    x='independent',
-    y='independent'
+    x="independent",
+    y="independent"
 ).configure_view(
     continuousWidth=200,
     continuousHeight=300
@@ -102,6 +81,7 @@ score_chart = alt.layer(bars, labels).facet(
 )
 
 st.altair_chart(score_chart, use_container_width=True)
+
 
 
 
