@@ -360,7 +360,7 @@ area_chart = alt.Chart(monthly).mark_area(interpolate="monotone").encode(
     ]
 ).add_params(type_selection).properties(
     title="Cumulative Carbon Emissions Over Time (Stacked by Type)",
-    width=2000,
+    width=200,
     height=500
 )
 
