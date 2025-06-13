@@ -4,7 +4,7 @@ import altair as alt
 import streamlit as st
 
 
-# --- Load Data ---
+# --- Load Data --- 
 df = pd.read_csv("open-llm-leaderboards.csv")
 
  
