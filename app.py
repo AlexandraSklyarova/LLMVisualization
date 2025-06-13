@@ -119,28 +119,37 @@ long_df = grouped.melt(
     value_name="Score"
 )
 
-# Shared selection across all charts (click-based)
-metric_selection = alt.selection_point(fields=["Metric"], name="MetricSelector")
+# Shared metric selection (clickable)
+metric_selection = alt.selection_point(
+    fields=["Metric"],
+    name="SelectMetric"
+)
 
 # Get unique model types
 types = long_df["Type"].unique().tolist()
 
-# Chunk types into rows of 3
+# Function to chunk types into groups of 3 for layout
 def chunks(lst, n):
     for i in range(0, len(lst), n):
         yield lst[i:i + n]
 
-# Layout charts in rows
+# Build layout of charts by model Type
 for row_types in chunks(types, 3):
     cols = st.columns(len(row_types))
     for i, t in enumerate(row_types):
-        filtered_df = long_df[long_df["Type"] == t]
-
-        base = alt.Chart(filtered_df).encode(
+        # Use the full DataFrame, and filter via transform_filter
+        base = alt.Chart(long_df).transform_filter(
+            alt.datum.Type == t
+        ).encode(
             x=alt.X("Metric:N", title="Evaluation Metric"),
             y=alt.Y("Score:Q", title="Avg Score"),
             color=alt.Color("Metric:N", legend=None),
-            opacity=alt.condition(metric_selection, alt.value(1.0), alt.value(0.2))
+            opacity=alt.condition(metric_selection, alt.value(1.0), alt.value(0.2)),
+            tooltip=[
+                alt.Tooltip("Metric:N", title="Metric"),
+                alt.Tooltip("Score:Q", title="Score", format=".2f"),
+                alt.Tooltip("Type:N", title="Model")
+            ]
         ).add_params(metric_selection)
 
         composed = alt.layer(
@@ -154,10 +163,11 @@ for row_types in chunks(types, 3):
         ).properties(
             title=t,
             width=400,
-            height=600
+            height=500
         )
 
         cols[i].altair_chart(composed, use_container_width=True)
+
 
 
 
