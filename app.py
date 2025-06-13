@@ -15,6 +15,7 @@ df['Submission Date'] = pd.to_datetime(df['Submission Date'], errors='coerce')
 df = df[df['Type'].notna()]
 
 # Sidebar filters
+st.set_page_config(layout="wide")
 st.sidebar.header("Filters")
 
 # Date filter
@@ -35,14 +36,14 @@ df = df[df["Type"].isin(selected_types)]
 # Score columns
 score_cols = ['IFEval', 'BBH', 'MATH Lvl 5', 'GPQA', 'MUSR', 'Average ⬆️']
 
-# Filter by minimum average score
+# Minimum score filter
 min_score = st.sidebar.slider("Minimum Average Score",
                               float(df['Average ⬆️'].min()),
                               float(df['Average ⬆️'].max()),
                               float(df['Average ⬆️'].min()))
 df = df[df['Average ⬆️'] >= min_score]
 
-# Aggregate
+# Group by type and average scores
 grouped = df.groupby("Type").agg({
     "IFEval": "mean",
     "BBH": "mean",
@@ -55,22 +56,27 @@ grouped = df.groupby("Type").agg({
     "Model": "count"
 }).reset_index().rename(columns={"Model": "Model Count"})
 
-st.title("💡 Open LLM Leaderboard — Streamlit Dashboard")
+# Melt into long format for Altair
+long_df = grouped.melt(
+    id_vars=["Type"],
+    value_vars=score_cols,
+    var_name="Metric",
+    value_name="Score"
+)
 
-# Transform data for faceted chart
-long_df = grouped.melt(id_vars=["Type"], value_vars=score_cols, var_name="Metric", value_name="Score")
+st.title("💡 Open LLM Leaderboard — Evaluation Metrics by Model Type")
 
-# Base chart without faceting
+# Base chart
 base = alt.Chart(long_df).encode(
     x=alt.X("Metric:N", title="Evaluation Metric"),
     y=alt.Y("Score:Q", title="Average Score"),
     color=alt.Color("Type:N", legend=None)
 )
 
-# Bar layer
+# Bars
 bars = base.mark_bar()
 
-# Text label layer
+# Labels on top of bars
 labels = base.mark_text(
     align='center',
     baseline='bottom',
@@ -81,14 +87,20 @@ labels = base.mark_text(
     text=alt.Text("Score:Q", format=".2f")
 )
 
-# Combine and apply facet
+# Faceted chart
 score_chart = alt.layer(bars, labels).facet(
-    column=alt.Column("Type:N", title="Model Type", columns=3)  # show 3 per row
+    column=alt.Column("Type:N", title="Model Type", columns=3),
+    spacing=30
+).resolve_scale(
+    x='independent',
+    y='independent'
+).configure_view(
+    continuousWidth=200,
+    continuousHeight=300
 ).properties(
     title="Evaluation Metrics by Model Type"
 )
 
-# Show chart
 st.altair_chart(score_chart, use_container_width=True)
 
 
