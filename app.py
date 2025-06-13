@@ -472,16 +472,7 @@ area = alt.Chart(monthly).mark_area(interpolate="monotone").encode(
     height=500
 )
 
-combined_chart = alt.vconcat(
-    area,
-    (bubbles + labels)
-).resolve_scale(
-    color="shared"
-)
-
-# --- Display as one interactive chart ---
-st.altair_chart(combined_chart, use_container_width=True)
-
+st.altair_chart(area, use_container_width=True) + st.altair_chart(bubbles + labels, use_container_width=True)
 
 
 
