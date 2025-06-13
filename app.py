@@ -125,7 +125,7 @@ df = df.dropna(subset=["CO₂ cost (kg)"])
 # Aggregate by Type
 agg_df = df.groupby("Type", as_index=False)["CO₂ cost (kg)"].sum()
 agg_df["CO₂ Rounded"] = agg_df["CO₂ cost (kg)"].round().astype(int)
-agg_df["Size"] = agg_df["CO₂ cost (kg)"] ** 2
+agg_df["Size"] = agg_df["CO₂ cost (kg)"] ** 4
 
 # --- POSITION CIRCLES IN SPIRAL (SIMULATED PACKING) ---
 agg_df = agg_df.sort_values("CO₂ cost (kg)", ascending=False).reset_index(drop=True)
@@ -203,8 +203,8 @@ stacked_area = alt.Chart(monthly_emissions).mark_area(interpolate='monotone').en
     tooltip=["Month:T", "Type:N", "Cumulative CO₂:Q"]
 ).properties(
     title="Accumulating Carbon Emissions from AI Models Over Time (Stacked by Type)",
-    width=700,
-    height=400
+    width=200,
+    height=200
 )
 
 st.altair_chart(stacked_area, use_container_width=True)
