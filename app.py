@@ -59,35 +59,7 @@ st.title("💡 Open LLM Leaderboard — Streamlit Dashboard")
 
 
 
-st.markdown("###  LLM Evaluation Metrics Overview")
 
-evaluation_summary = {
-    "IFEval": {
-        "Description": "Tests if a model can follow explicit formatting instructions (e.g., include keyword X, use format Y). Focus is on format adherence."
-    },
-    "BBH": {
-        "Description": "Challenging reasoning benchmark of 23 BigBench tasks (math, logic, language). Correlates with human judgment."
-    },
-    "MATH Lvl 5": {
-        "Description": "Level 5 high school math competition problems. Requires exact output format using LaTeX/Asymptote."
-    },
-    "GPQA": {
-        "Description": "Graduate-level STEM questions validated by experts (biology, chemistry, physics). Gated to avoid contamination."
-    },
-    "MuSR": {
-        "Description": "Long, multistep reasoning problems (e.g., mysteries, logistics). Requires long-context understanding."
-    },
-    "MMLU-Pro": {
-        "Description": "Refined version of MMLU with 10 choices, higher difficulty, cleaner data, and expert review."
-    }
-}
-
-# Reformat into a transposed DataFrame
-evaluation_df = pd.DataFrame.from_dict(evaluation_summary, orient="columns")
-evaluation_df.index.name = "Info"
-
-# Show the table
-st.table(evaluation_df)
 
 
 
@@ -135,6 +107,37 @@ for row_types in chunks(types, 3):
 
         cols[i].altair_chart(composed, use_container_width=True)
 
+
+
+st.markdown("###  LLM Evaluation Metrics Overview")
+
+evaluation_summary = {
+    "IFEval": {
+        "Description": "Tests if a model can follow explicit formatting instructions (e.g., include keyword X, use format Y). Focus is on format adherence."
+    },
+    "BBH": {
+        "Description": "Challenging reasoning benchmark of 23 BigBench tasks (math, logic, language). Correlates with human judgment."
+    },
+    "MATH Lvl 5": {
+        "Description": "Level 5 high school math competition problems. Requires exact output format using LaTeX/Asymptote."
+    },
+    "GPQA": {
+        "Description": "Graduate-level STEM questions validated by experts (biology, chemistry, physics). Gated to avoid contamination."
+    },
+    "MuSR": {
+        "Description": "Long, multistep reasoning problems (e.g., mysteries, logistics). Requires long-context understanding."
+    },
+    "MMLU-Pro": {
+        "Description": "Refined version of MMLU with 10 choices, higher difficulty, cleaner data, and expert review."
+    }
+}
+
+# Reformat into a transposed DataFrame
+evaluation_df = pd.DataFrame.from_dict(evaluation_summary, orient="columns")
+evaluation_df.index.name = "Info"
+
+# Show the table
+st.table(evaluation_df)
 
 
 
