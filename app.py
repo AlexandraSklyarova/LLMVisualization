@@ -61,41 +61,39 @@ st.title("💡 Open LLM Leaderboard — Streamlit Dashboard")
 
 st.markdown("###  LLM Evaluation Metrics Overview")
 
-evaluation_df = pd.DataFrame([
-    {
-        "Metric": "IFEval",
-        "Description": "Tests if a model can follow explicit formatting instructions (e.g., include keyword X, use format Y). Focus is on format adherence, not content.",
+evaluation_summary = {
+    "IFEval": {
+        "Description": "Tests if a model can follow explicit formatting instructions (e.g., include keyword X, use format Y). Focus is on format adherence.",
         "Source": "https://arxiv.org/abs/2311.07911"
     },
-    {
-        "Metric": "BBH",
-        "Description": "A set of 23 challenging BigBench tasks for evaluating reasoning, math, logic, and language understanding. Correlates well with human judgment.",
+    "BBH": {
+        "Description": "Challenging reasoning benchmark of 23 BigBench tasks (math, logic, language). Correlates with human judgment.",
         "Source": "https://arxiv.org/abs/2210.09261"
     },
-    {
-        "Metric": "MATH Lvl 5",
-        "Description": "High school-level math competition problems in LaTeX format. Only includes the most difficult level (Level 5).",
+    "MATH Lvl 5": {
+        "Description": "Level 5 high school math competition problems. Requires exact output format using LaTeX/Asymptote.",
         "Source": "https://arxiv.org/abs/2103.03874"
     },
-    {
-        "Metric": "GPQA",
-        "Description": "Graduate-level science questions authored by experts (biology, physics, chemistry). Designed to be difficult for non-experts and rigorously validated.",
+    "GPQA": {
+        "Description": "Graduate-level STEM questions validated by experts (biology, chemistry, physics). Gated to avoid contamination.",
         "Source": "https://arxiv.org/abs/2311.12022"
     },
-    {
-        "Metric": "MuSR",
-        "Description": "Long, algorithmically generated problems (~1000 words), requiring multi-step reasoning and contextual integration (e.g., mysteries, logistics).",
+    "MuSR": {
+        "Description": "Long, multistep reasoning problems (e.g., mysteries, logistics). Requires long-context understanding.",
         "Source": "https://arxiv.org/abs/2310.16049"
     },
-    {
-        "Metric": "MMLU-Pro",
-        "Description": "Improved version of MMLU with cleaner, more challenging questions, more answer choices (10), and expert reviews to reduce noise.",
+    "MMLU-Pro": {
+        "Description": "Refined version of MMLU with 10 choices, higher difficulty, cleaner data, and expert review.",
         "Source": "https://arxiv.org/abs/2406.01574"
     }
-])
+}
 
+# Reformat into a transposed DataFrame
+evaluation_df = pd.DataFrame.from_dict(evaluation_summary, orient="columns")
+evaluation_df.index.name = "Info"
+
+# Show the table
 st.table(evaluation_df)
-
 
 
 
