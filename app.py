@@ -59,49 +59,47 @@ st.title("💡 Open LLM Leaderboard — Streamlit Dashboard")
 
 # Transform data for faceted chart
 long_df = grouped.melt(
-    id_vars=["Type"], 
-    value_vars=score_cols, 
-    var_name="Metric", 
+    id_vars=["Type"],
+    value_vars=score_cols,
+    var_name="Metric",
     value_name="Score"
 )
 
-# Base chart
-base = alt.Chart(long_df).encode(
-    x=alt.X("Metric:N", title="Evaluation Metric"),
-    y=alt.Y("Score:Q", title="Average Score"),
-    color=alt.Color("Type:N", legend=None)
-)
+# Get unique model types
+types = long_df["Type"].unique().tolist()
 
-# Bar layer
-bars = base.mark_bar()
+# Chunk types into rows of 3
+def chunks(lst, n):
+    for i in range(0, len(lst), n):
+        yield lst[i:i + n]
 
-# Text label layer
-labels = base.mark_text(
-    align='center',
-    baseline='bottom',
-    dy=-3,
-    fontSize=11,
-    fontWeight="bold"
-).encode(
-    text=alt.Text("Score:Q", format=".2f")
-)
+# Build chart for each type and lay out
+for row_types in chunks(types, 3):
+    cols = st.columns(len(row_types))  # create as many columns as needed
+    for i, t in enumerate(row_types):
+        chart = alt.Chart(long_df).transform_filter(
+            alt.datum.Type == t
+        ).encode(
+            x=alt.X("Metric:N", title="Evaluation Metric"),
+            y=alt.Y("Score:Q", title="Avg Score"),
+            color=alt.Color("Metric:N", legend=None)
+        )
 
-# Combine and facet with 3 columns per row
-score_chart = alt.layer(bars, labels).facet(
-    column=alt.Column("Type:N", title="Model Type", columns=3),
-    spacing=25
-).resolve_scale(
-    y='independent'
-).configure_view(
-    continuousWidth=200,
-    continuousHeight=300
-).properties(
-    title="Evaluation Metrics by Model Type"
-)
+        composed = alt.layer(
+            chart.mark_bar(),
+            chart.mark_text(
+                align="center",
+                baseline="bottom",
+                dy=-3,
+                fontSize=11
+            ).encode(text=alt.Text("Score:Q", format=".2f"))
+        ).properties(
+            title=t,
+            width=220,
+            height=300
+        )
 
-# Show chart
-st.altair_chart(score_chart, use_container_width=True)
-
+        cols[i].altair_chart(composed, use_container_width=True)
 
 
 
