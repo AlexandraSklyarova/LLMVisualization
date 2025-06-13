@@ -214,58 +214,56 @@ st.altair_chart(stacked_area, use_container_width=True)
 
 
 
-import altair as alt
 
-# Clean column names and rename for safety
+
+import altair as alt
+import pandas as pd
+
+# Clean column names and ensure numeric types
 df.columns = df.columns.str.strip()
 df = df.rename(columns={"Average ⬆️": "Average"})
 df = df.dropna(subset=["Hub ❤️", "Average", "Type"])
+df["Hub ❤️"] = pd.to_numeric(df["Hub ❤️"], errors="coerce")
+df["Average"] = pd.to_numeric(df["Average"], errors="coerce")
+df = df.dropna(subset=["Hub ❤️", "Average"])
 
-# Create parameter for selection
-type_param = alt.param(
-    name="SelectedType",
-    bind=alt.binding_select(
-        options=sorted(df["Type"].unique()),
-        name="Highlight Type: "
-    ),
-    value=sorted(df["Type"].unique())[0]  # default value
-)
-
-# Background halo layer
-highlight = alt.Chart(df).mark_circle(
-    size=300, opacity=0.1, stroke='black', strokeWidth=1
-).encode(
-    x=alt.X("Hub ❤️:Q"),
-    y=alt.Y("Average:Q")
-).transform_filter(type_param)
-
-# Main data points
-points = alt.Chart(df).mark_circle(size=120).encode(
+# Base scatter chart
+base = alt.Chart(df).encode(
     x=alt.X("Hub ❤️:Q", title="User Satisfaction (Hub ❤️)"),
     y=alt.Y("Average:Q", title="Average Score"),
-    color=alt.Color("Type:N", legend=alt.Legend(title="Model Type")),
-    tooltip=["Type", "Hub ❤️", "Average"]
+    color=alt.Color("Type:N", title="Model Type"),
+    tooltip=["Type", "Hub ❤️:Q", "Average:Q"]
 )
 
-# Trend line (regression per type)
-trend = alt.Chart(df).transform_regression(
-    "Hub ❤️", "Average", groupby=["Type"]
-).mark_line(strokeDash=[3, 3]).encode(
-    x="Hub ❤️:Q",
-    y="Average:Q",
-    color="Type:N"
+# Scatter points
+points = base.mark_circle(size=100)
+
+# Regression line across all data
+trend = base.transform_regression(
+    "Hub ❤️", "Average", method="linear"
+).mark_line(color="black", strokeDash=[4,4])
+
+# Marginal histograms
+x_hist = alt.Chart(df).mark_bar(opacity=0.3).encode(
+    x=alt.X("Hub ❤️:Q", bin=alt.Bin(maxbins=30)),
+    y=alt.Y('count()', title=None)
+).properties(height=100)
+
+y_hist = alt.Chart(df).mark_bar(opacity=0.3).encode(
+    x=alt.X('count()', title=None),
+    y=alt.Y("Average:Q", bin=alt.Bin(maxbins=30))
+).properties(width=100)
+
+# Layout composition
+chart = alt.vconcat(
+    x_hist,
+    alt.hconcat(points + trend, y_hist)
+).resolve_axis(
+    x='shared', y='shared'
+).properties(
+    title="Correlation between User Satisfaction and Average Score"
 )
 
-# Combine all
-final_chart = (
-    alt.layer(highlight, points, trend)
-    .add_params(type_param)
-    .properties(
-        title="User Satisfaction vs Average Score (Interactive Highlight + Trend)",
-        width=700,
-        height=450
-    )
-)
+st.altair_chart(chart, use_container_width=True)
 
-st.altair_chart(final_chart, use_container_width=True)
 
