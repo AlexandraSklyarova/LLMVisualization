@@ -101,7 +101,7 @@ for row_types in chunks(types, 3):
             ).encode(text=alt.Text("Score:Q", format=".2f"))
         ).properties(
             title=t,
-            width=350,
+            width=450,
             height=600
         )
 
