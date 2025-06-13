@@ -314,7 +314,7 @@ bubble_data["x"], bubble_data["y"] = polar_positions(len(bubble_data))
 bubbles = alt.Chart(bubble_data).mark_circle(opacity=0.9).encode(
     x=alt.X("x:Q", axis=None),
     y=alt.Y("y:Q", axis=None),
-    size=alt.Size("Size:Q", scale=alt.Scale(range=[2500, 30000]), legend=None),
+    size=alt.Size("Size:Q", scale=alt.Scale(range=[3500, 35000]), legend=None),
     color=alt.Color("Type:N", legend=alt.Legend(title="Model Type")),
     opacity=alt.condition(type_selection, alt.value(1.0), alt.value(0.2)),
     tooltip=[
@@ -357,7 +357,7 @@ area_chart = alt.Chart(monthly).mark_area(interpolate="monotone").encode(
     ]
 ).add_params(type_selection).properties(
     title="Cumulative Carbon Emissions Over Time (Stacked by Type)",
-    width=1000,
+    width=1200,
     height=500
 )
 
