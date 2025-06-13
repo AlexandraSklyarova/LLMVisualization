@@ -55,7 +55,7 @@ grouped = df.groupby("Type").agg({
     "Model": "count"
 }).reset_index().rename(columns={"Model": "Model Count"})
 
-st.title("💡 Open LLM Leaderboard — Streamlit Dashboard")
+st.title("Efficacy, Enjoyment, and Environment: An Exploration of Open LLM Leaderboards")
 
 
 
