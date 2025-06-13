@@ -119,12 +119,8 @@ long_df = grouped.melt(
     value_name="Score"
 )
 
-# Create a selection for metrics
-metric_selection = alt.selection_point(
-    fields=["Metric"],
-    bind=alt.binding_select(options=long_df["Metric"].unique().tolist(), name="Highlight Metric: "),
-    name="SelectMetric"
-)
+# Shared selection across all charts (click-based)
+metric_selection = alt.selection_point(fields=["Metric"], name="MetricSelector")
 
 # Get unique model types
 types = long_df["Type"].unique().tolist()
@@ -134,9 +130,9 @@ def chunks(lst, n):
     for i in range(0, len(lst), n):
         yield lst[i:i + n]
 
-# Build chart for each type and lay out
+# Layout charts in rows
 for row_types in chunks(types, 3):
-    cols = st.columns(len(row_types))  # create as many columns as needed
+    cols = st.columns(len(row_types))
     for i, t in enumerate(row_types):
         filtered_df = long_df[long_df["Type"] == t]
 
