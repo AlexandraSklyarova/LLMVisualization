@@ -317,7 +317,7 @@ bubble_data["x"], bubble_data["y"] = polar_positions(len(bubble_data))
 bubbles = alt.Chart(bubble_data).mark_circle(opacity=0.9).encode(
     x=alt.X("x:Q", axis=None),
     y=alt.Y("y:Q", axis=None),
-    size=alt.Size("Size:Q", scale=alt.Scale(range=[3500, 35000]), legend=None),
+    size=alt.Size("Size:Q", scale=alt.Scale(range=[4500, 45000]), legend=None),
     color=alt.Color("Type:N", legend=alt.Legend(title="Model Type")),
     opacity=alt.condition(type_selection, alt.value(1.0), alt.value(0.2)),
     tooltip=[
@@ -369,21 +369,19 @@ combined_chart = alt.vconcat(bubble_chart, area_chart).resolve_legend(color="sha
 st.altair_chart(combined_chart, use_container_width=True)
 
 
-heatmap = alt.Chart(grouped).transform_bin(
-    [{"as": "binned_satisfaction", "field": "Hub ❤️", "bin": alt.Bin(maxbins=40)},
-     {"as": "binned_score", "field": "Average ⬆️", "bin": alt.Bin(maxbins=40)}]
-).transform_aggregate(
-    count="count()", groupby=["binned_satisfaction", "binned_score"]
-).mark_rect().encode(
-    x=alt.X("binned_satisfaction:Q", title="User Satisfaction (Hub ❤️)"),
-    y=alt.Y("binned_score:Q", title="Average Score"),
-    color=alt.Color("count:Q", scale=alt.Scale(scheme="reds"), title="Density"),
-    tooltip=["binned_satisfaction", "binned_score", "count"]
-).properties(
-    title="Density of Models by User Satisfaction vs Average Score",
-    width=600,
-    height=400
-)
+heatmap = alt.Chart(grouped) \
+    .transform_bin("binned_satisfaction", field="Hub ❤️", bin=alt.Bin(maxbins=40)) \
+    .transform_bin("binned_score", field="Average ⬆️", bin=alt.Bin(maxbins=40)) \
+    .transform_aggregate(
+        count='count()',
+        groupby=['binned_satisfaction', 'binned_score']
+    ) \
+    .mark_rect() \
+    .encode(
+        x='binned_satisfaction:Q',
+        y='binned_score:Q',
+        color='count:Q'
+    )
 
 
 
