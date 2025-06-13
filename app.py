@@ -402,7 +402,7 @@ df["Upload To Hub Date"] = pd.to_datetime(df["Upload To Hub Date"], errors="coer
 df = df.dropna(subset=["CO₂ cost (kg)", "Upload To Hub Date"])
 df["Month"] = df["Upload To Hub Date"].dt.to_period('M').dt.to_timestamp()
 
-# --- Create selection from the legend ---
+# --- Selection shared across both charts ---
 type_selection = alt.selection_point(fields=["Type"], bind="legend")
 
 # --- Bubble chart data ---
@@ -451,15 +451,15 @@ labels = alt.Chart(bubble_data).mark_text(
     text="CO₂ Rounded:Q",
     opacity=alt.condition(type_selection, alt.value(1.0), alt.value(0.2))
 )
-st.altair_chart(bubble + labels, use_container_width=True)
 
+bubble_chart = bubbles + labels
 
 # --- Area chart data ---
 monthly = df.groupby(["Month", "Type"])["CO₂ cost (kg)"].sum().reset_index()
 monthly["Cumulative CO₂"] = monthly.sort_values("Month").groupby("Type")["CO₂ cost (kg)"].cumsum()
 
 # --- Area chart ---
-area = alt.Chart(monthly).mark_area(interpolate="monotone").encode(
+area_chart = alt.Chart(monthly).mark_area(interpolate="monotone").encode(
     x=alt.X("Month:T", title="Month", axis=alt.Axis(format="%b %Y")),
     y=alt.Y("Cumulative CO₂:Q", title="Cumulative CO₂ Emissions (kg)", stack="zero"),
     color=alt.Color("Type:N", legend=None),  # suppress duplicate legend
@@ -475,7 +475,13 @@ area = alt.Chart(monthly).mark_area(interpolate="monotone").encode(
     height=500
 )
 
-st.altair_chart(area, use_container_width=True)
+# --- Combine both charts vertically ---
+combined_chart = alt.vconcat(bubble_chart, area_chart).resolve_legend(
+    color="shared"
+)
+
+# --- Render in Streamlit ---
+st.altair_chart(combined_chart, use_container_width=True)
 
 
 
