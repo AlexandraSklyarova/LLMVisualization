@@ -57,7 +57,8 @@ grouped = df.groupby("Type").agg({
 st.title("💡 Open LLM Leaderboard — Streamlit Dashboard")
 
 # Bar Chart: Average Scores by Type
-score_chart = alt.Chart(grouped).transform_fold(
+# Bar Chart with labels on top
+bars = alt.Chart(grouped).transform_fold(
     score_cols,
     as_=["Metric", "Score"]
 ).mark_bar().encode(
@@ -65,9 +66,30 @@ score_chart = alt.Chart(grouped).transform_fold(
     y=alt.Y("Score:Q", title="Average Score"),
     color=alt.Color("Type:N"),
     column=alt.Column("Type:N", title="Model Type")
-).properties(title="Evaluation Metrics by Model Type").interactive()
+)
+
+# Add text labels on top of bars
+labels = alt.Chart(grouped).transform_fold(
+    score_cols,
+    as_=["Metric", "Score"]
+).mark_text(
+    align='center',
+    baseline='bottom',
+    dy=-2,
+    fontSize=11,
+    fontWeight="bold"
+).encode(
+    x=alt.X("Metric:N"),
+    y=alt.Y("Score:Q"),
+    text=alt.Text("Score:Q", format=".2f"),
+    column=alt.Column("Type:N")
+)
+
+# Combine and render
+score_chart = (bars + labels).properties(title="Evaluation Metrics by Model Type")
 
 st.altair_chart(score_chart, use_container_width=True)
+
 
 
 
@@ -88,8 +110,8 @@ pie = alt.Chart(type_counts).mark_arc(innerRadius=50, outerRadius=150).encode(
     color=alt.Color(field='Type', type='nominal'),
     tooltip=['Type', 'Count']
 ).properties(
-    width=350,
-    height=350,
+    width=400,
+    height=400,
     title='Distribution of Model Types'
 )
 
