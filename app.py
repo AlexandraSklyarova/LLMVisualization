@@ -378,29 +378,29 @@ st.altair_chart(combined_chart, use_container_width=True)
 df.columns = df.columns.str.strip()
 df = df.rename(columns={"Average ⬆️": "Average"})
 
-# Drop missing values and convert to numeric
-df = df.dropna(subset=["Hub ❤️", "Average"])
+# Drop missing values and convert types
+df = df.dropna(subset=["Hub ❤️", "Average", "eval_name"])
 df["Hub ❤️"] = pd.to_numeric(df["Hub ❤️"], errors="coerce")
 df["Average"] = pd.to_numeric(df["Average"], errors="coerce")
 df = df.dropna(subset=["Hub ❤️", "Average"])
 
-# Bin satisfaction (20-point range) and average (5-point range)
+# Bin satisfaction (20-point range) and average score (5-point range)
 df["Satisfaction_Bin"] = (df["Hub ❤️"] // 20) * 20
 df["Average_Bin"] = (df["Average"] // 5) * 5
 
-# Count how many models fall into each bin
-binned = df.groupby(["Satisfaction_Bin", "Average_Bin"]).size().reset_index(name="Model Count")
+# Count eval_name entries per bin
+binned = df.groupby(["Satisfaction_Bin", "Average_Bin"])["eval_name"].count().reset_index(name="Eval Count")
 
 # Create the heatmap
 heatmap = alt.Chart(binned).mark_rect().encode(
     x=alt.X("Satisfaction_Bin:O", title="User Satisfaction Bin (20 pt range)"),
     y=alt.Y("Average_Bin:O", title="Average Score Bin (5 pt range)"),
-    color=alt.Color("Model Count:Q", scale=alt.Scale(scheme="blues"), title="Model Count"),
-    tooltip=["Satisfaction_Bin", "Average_Bin", "Model Count"]
+    color=alt.Color("Eval Count:Q", scale=alt.Scale(scheme="blues"), title="Evaluation Count"),
+    tooltip=["Satisfaction_Bin", "Average_Bin", "Eval Count"]
 ).properties(
     width=600,
     height=500,
-    title="Model Density by User Satisfaction and Average Score"
+    title="Evaluation Density by User Satisfaction and Average Score"
 )
 
 # Display in Streamlit
