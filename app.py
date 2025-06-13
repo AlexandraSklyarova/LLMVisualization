@@ -3,6 +3,8 @@ import numpy as np
 import altair as alt
 import streamlit as st
 
+df = pd.read_csv("open-llm-leaderboards.csv")  # Update with your actual file path or source
+
 # Clean and preprocess
 df.columns = df.columns.str.strip()
 df['Submission Date'] = pd.to_datetime(df['Submission Date'], errors='coerce')
