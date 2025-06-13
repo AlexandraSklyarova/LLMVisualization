@@ -396,40 +396,40 @@ st.altair_chart(final_chart, use_container_width=True)
 df.columns = df.columns.str.strip()
 df = df.rename(columns={"Average ⬆️": "Average"})
 
+# Keep relevant columns and drop missing values
 df = df.dropna(subset=["Hub ❤️", "Average", "Type"])
 df["Hub ❤️"] = pd.to_numeric(df["Hub ❤️"], errors="coerce")
 df["Average"] = pd.to_numeric(df["Average"], errors="coerce")
 df = df.dropna(subset=["Hub ❤️", "Average"])
 
-# --- Sanity check ---
+# --- ENSURE NON-EMPTY DATAFRAME ---
 if df.empty:
     st.warning("No data available for heatmap after filtering.")
 else:
-    st.write("Heatmap data preview", df[["Hub ❤️", "Average"]].describe())
-
-    # --- Heatmap ---
+    # --- HEATMAP ---
     heatmap = alt.Chart(df).mark_rect().encode(
         x=alt.X("Hub ❤️:Q", bin=alt.Bin(maxbins=20), title="User Satisfaction"),
         y=alt.Y("Average:Q", bin=alt.Bin(maxbins=20), title="Average Score"),
-        color=alt.Color("count():Q", aggregate="count", scale=alt.Scale(scheme="blues"), title="Model Count"),
+        color=alt.Color("count():Q", scale=alt.Scale(scheme="blues"), title="Model Count"),
         tooltip=[alt.Tooltip("count():Q", title="Model Count")]
     ).properties(width=500, height=400)
 
-    # --- Marginal Histograms ---
+    # --- MARGINAL HISTOGRAMS ---
     x_hist = alt.Chart(df).mark_bar(opacity=0.4).encode(
-        x=alt.X("Hub ❤️:Q", bin=alt.Bin(maxbins=20)),
-        y=alt.Y("count():Q")
+        x=alt.X("Hub ❤️:Q", bin=alt.Bin(maxbins=20), title="User Satisfaction"),
+        y=alt.Y("count():Q", title=None)
     ).properties(height=80)
 
     y_hist = alt.Chart(df).mark_bar(opacity=0.4).encode(
-        x=alt.X("count():Q"),
-        y=alt.Y("Average:Q", bin=alt.Bin(maxbins=20))
+        x=alt.X("count():Q", title=None),
+        y=alt.Y("Average:Q", bin=alt.Bin(maxbins=20), title="Average Score")
     ).properties(width=80)
 
-    # --- Compose Layout ---
+    # --- COMBINE ---
     main = alt.hconcat(heatmap, y_hist)
     final = alt.vconcat(x_hist, main).resolve_axis(x='shared', y='shared').properties(
         title="Density Heatmap: User Satisfaction vs Average Score"
     )
 
+    # --- DISPLAY ---
     st.altair_chart(final, use_container_width=True)
