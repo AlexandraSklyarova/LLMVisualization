@@ -449,7 +449,6 @@ labels = alt.Chart(bubble_data).mark_text(
     opacity=alt.condition(type_selection, alt.value(1.0), alt.value(0.2))
 )
 
-bubble_combined = bubbles + labels
 
 # --- Area chart data ---
 monthly = df.groupby(["Month", "Type"])["CO₂ cost (kg)"].sum().reset_index()
@@ -472,15 +471,8 @@ area = alt.Chart(monthly).mark_area(interpolate="monotone").encode(
     height=500
 )
 
-# --- Combine vertically to preserve interactivity ---
-combined_chart = alt.vconcat(
-    area,
-    bubble_combined
-).resolve_legend(
-    color="independent"
-)
+combined_chart = area + bubbles + labels
 
-# --- Display in Streamlit ---
 st.altair_chart(combined_chart, use_container_width=True)
 
 
