@@ -119,42 +119,42 @@ long_df = grouped.melt(
     value_name="Score"
 )
 
-# Shared metric selection (clickable)
-metric_selection = alt.selection_point(
-    fields=["Metric"],
-    name="SelectMetric"
-)
+# --- Create a global metric selection (shared across all charts) ---
+metric_selection = alt.selection_point(fields=["Metric"], name="metricClick")
 
-# Get unique model types
+# Unique Types
 types = long_df["Type"].unique().tolist()
 
-# Function to chunk types into groups of 3 for layout
+# Chunk helper
 def chunks(lst, n):
     for i in range(0, len(lst), n):
         yield lst[i:i + n]
 
-# Build layout of charts by model Type
+# Base chart uses all data, filtered per chart by "Type"
+base = alt.Chart(long_df).encode(
+    x=alt.X("Metric:N", title="Evaluation Metric"),
+    y=alt.Y("Score:Q", title="Avg Score"),
+    color=alt.Color("Metric:N", legend=None),
+    opacity=alt.condition(metric_selection, alt.value(1.0), alt.value(0.2)),
+    tooltip=[
+        alt.Tooltip("Type:N", title="Model Type"),
+        alt.Tooltip("Metric:N", title="Metric"),
+        alt.Tooltip("Score:Q", format=".2f", title="Score")
+    ]
+).add_params(metric_selection)
+
+# Draw charts
 for row_types in chunks(types, 3):
     cols = st.columns(len(row_types))
     for i, t in enumerate(row_types):
-        # Use the full DataFrame, and filter via transform_filter
-        base = alt.Chart(long_df).transform_filter(
+        # Use base chart and filter by Type
+        chart = base.transform_filter(
             alt.datum.Type == t
-        ).encode(
-            x=alt.X("Metric:N", title="Evaluation Metric"),
-            y=alt.Y("Score:Q", title="Avg Score"),
-            color=alt.Color("Metric:N", legend=None),
-            opacity=alt.condition(metric_selection, alt.value(1.0), alt.value(0.2)),
-            tooltip=[
-                alt.Tooltip("Metric:N", title="Metric"),
-                alt.Tooltip("Score:Q", title="Score", format=".2f"),
-                alt.Tooltip("Type:N", title="Model")
-            ]
-        ).add_params(metric_selection)
+        )
 
         composed = alt.layer(
-            base.mark_bar(),
-            base.mark_text(
+            chart.mark_bar(),
+            chart.mark_text(
                 align="center",
                 baseline="bottom",
                 dy=-3,
@@ -166,6 +166,7 @@ for row_types in chunks(types, 3):
             height=500
         )
 
+        # Show in Streamlit
         cols[i].altair_chart(composed, use_container_width=True)
 
 
