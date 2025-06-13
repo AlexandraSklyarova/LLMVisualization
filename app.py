@@ -58,9 +58,14 @@ grouped = df.groupby("Type").agg({
 st.title("💡 Open LLM Leaderboard — Streamlit Dashboard")
 
 # Transform data for faceted chart
-long_df = grouped.melt(id_vars=["Type"], value_vars=score_cols, var_name="Metric", value_name="Score")
+long_df = grouped.melt(
+    id_vars=["Type"], 
+    value_vars=score_cols, 
+    var_name="Metric", 
+    value_name="Score"
+)
 
-# Base chart without faceting
+# Base chart
 base = alt.Chart(long_df).encode(
     x=alt.X("Metric:N", title="Evaluation Metric"),
     y=alt.Y("Score:Q", title="Average Score"),
@@ -81,15 +86,30 @@ labels = base.mark_text(
     text=alt.Text("Score:Q", format=".2f")
 )
 
-# Combine and apply facet
+# Combine and facet with 3 columns per row
 score_chart = alt.layer(bars, labels).facet(
-    column=alt.Column("Type:N", title="Model Type")
+    column=alt.Column("Type:N", title="Model Type", columns=3),
+    spacing=25
+).resolve_scale(
+    y='independent'
+).configure_view(
+    continuousWidth=200,
+    continuousHeight=300
 ).properties(
     title="Evaluation Metrics by Model Type"
 )
 
 # Show chart
 st.altair_chart(score_chart, use_container_width=True)
+
+
+
+
+
+
+
+
+
 
 
 
