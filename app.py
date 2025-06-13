@@ -7,30 +7,7 @@ import streamlit as st
 # --- Load Data ---
 df = pd.read_csv("open-llm-leaderboards.csv")
 
-# --- Preprocess ---
-df["submission_date"] = pd.to_datetime(df["submission_date"], errors='coerce')
-df["average_score"] = df[["IFEval_score", "BBH_score", "MUSR_score", "MATH_level_5_score", "GPQA_score"]].mean(axis=1)
 
-# --- Sidebar Filters ---
-st.sidebar.header("Filters")
-model_types = st.sidebar.multiselect("Select Model Type", options=df.model_type.unique(), default=df.model_type.unique())
-architectures = st.sidebar.multiselect("Select Architecture", options=df.architecture.unique(), default=df.architecture.unique())
-moe = st.sidebar.radio("Mixture of Experts (MoE)?", ["All", True, False], index=0)
-date_range = st.sidebar.date_input("Submission Date Range", [df.submission_date.min(), df.submission_date.max()])
-
-# Apply filters
-filtered = df[
-    df.model_type.isin(model_types) &
-    df.architecture.isin(architectures) &
-    (df.submission_date >= pd.to_datetime(date_range[0])) &
-    (df.submission_date <= pd.to_datetime(date_range[1]))
-]
-if moe != "All":
-    filtered = filtered[filtered.moe == moe]
-
-# --- Layout ---
-st.title("📊 Open LLM Leaderboard Dashboard")
-st.markdown("Explore model performance, environmental impact, and user engagement.")
 
 # Clean and preprocess
 df.columns = df.columns.str.strip()
@@ -106,7 +83,7 @@ labels = base.mark_text(
 
 # Combine and apply facet
 score_chart = alt.layer(bars, labels).facet(
-    column=alt.Column("Type:N", title="Model Type")
+    column=alt.Column("Type:N", title="Model Type", columns=3)  # show 3 per row
 ).properties(
     title="Evaluation Metrics by Model Type"
 )
