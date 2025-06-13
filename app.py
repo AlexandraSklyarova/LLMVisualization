@@ -388,7 +388,100 @@ st.altair_chart(final_chart, use_container_width=True)
 
 
 
+#new
 
+df.columns = df.columns.str.strip()
+df = df.rename(columns={"Average ⬆️": "Average"})
+
+# Clean
+df = df.dropna(subset=["CO₂ cost (kg)", "Type", "Upload To Hub Date"])
+df["CO₂ cost (kg)"] = pd.to_numeric(df["CO₂ cost (kg)"], errors="coerce")
+df["Upload To Hub Date"] = pd.to_datetime(df["Upload To Hub Date"], errors="coerce")
+df = df.dropna(subset=["CO₂ cost (kg)", "Upload To Hub Date"])
+
+# Aggregate by Type
+agg_df = df.groupby("Type", as_index=False)["CO₂ cost (kg)"].sum()
+agg_df["CO₂ Rounded"] = agg_df["CO₂ cost (kg)"].round().astype(int)
+agg_df["Size"] = agg_df["CO₂ cost (kg)"] ** 4
+
+# Polar layout
+def polar_positions(n, radius_step=1.5):
+    angles, radii = [], []
+    for i in range(n):
+        r = radius_step * np.sqrt(i)
+        theta = i * 137.5
+        angles.append(np.deg2rad(theta))
+        radii.append(r)
+    x = [r * np.cos(a) for r, a in zip(radii, angles)]
+    y = [r * np.sin(a) for r, a in zip(radii, angles)]
+    return x, y
+
+agg_df = agg_df.sort_values("CO₂ cost (kg)", ascending=False).reset_index(drop=True)
+agg_df["x"], agg_df["y"] = polar_positions(len(agg_df), radius_step=0.4)
+
+# --- BUBBLE CHART ---
+type_selection = alt.selection_single(fields=["Type"], bind="legend", name="Select")
+
+bubbles = alt.Chart(agg_df).mark_circle(opacity=0.9).encode(
+    x=alt.X("x:Q", axis=None),
+    y=alt.Y("y:Q", axis=None),
+    size=alt.Size("Size:Q", scale=alt.Scale(range=[2500, 30000]), legend=None),
+    color=alt.Color("Type:N", legend=alt.Legend(title="Model Type")),
+    opacity=alt.condition(type_selection, alt.value(1), alt.value(0.15)),
+    tooltip=[
+        alt.Tooltip("Type:N", title="Model Type"),
+        alt.Tooltip("CO₂ cost (kg):Q", title="Total CO₂ (kg)", format=",.0f")
+    ]
+).add_params(type_selection).properties(
+    title="Packed Bubble Chart of CO₂ Emissions by Model Type",
+    width=700,
+    height=600
+)
+
+labels = alt.Chart(agg_df).mark_text(
+    fontSize=11,
+    fontWeight="bold",
+    color="black"
+).encode(
+    x="x:Q",
+    y="y:Q",
+    text="CO₂ Rounded:Q"
+)
+
+st.altair_chart(bubbles + labels, use_container_width=True)
+
+# --- STACKED AREA CHART ---
+df['Month'] = df['Upload To Hub Date'].dt.to_period('M').dt.to_timestamp()
+
+monthly_emissions = (
+    df.groupby(['Month', 'Type'])['CO₂ cost (kg)']
+    .sum()
+    .reset_index()
+)
+
+monthly_emissions['Cumulative CO₂'] = (
+    monthly_emissions.sort_values("Month")
+    .groupby('Type')["CO₂ cost (kg)"]
+    .cumsum()
+)
+
+stacked_area = alt.Chart(monthly_emissions).mark_area(interpolate='monotone').encode(
+    x=alt.X("Month:T", title="Month", axis=alt.Axis(format="%b %Y")),
+    y=alt.Y("Cumulative CO₂:Q", stack="zero", title="Cumulative CO₂ Emissions (kg)"),
+    color=alt.Color("Type:N", title="Model Type"),
+    opacity=alt.condition(type_selection, alt.value(1), alt.value(0.15)),
+    tooltip=[
+        alt.Tooltip("Month:T", title="Month", format="%B %Y"),
+        alt.Tooltip("Type:N", title="Model Type"),
+        alt.Tooltip("Cumulative CO₂:Q", title="Cumulative CO₂ (kg)", format=",.0f")
+    ]
+).add_params(type_selection).properties(
+    title="Accumulating Carbon Emissions from AI Models Over Time (Stacked by Type)",
+    width=1000,
+    height=500
+)
+
+st.altair_chart(stacked_area, use_container_width=True)
 
 
 
