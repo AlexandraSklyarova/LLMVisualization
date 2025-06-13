@@ -155,85 +155,31 @@ st.altair_chart(final_chart, use_container_width=True)
 
 
 
-
-# Define shape mapping based on Type (you can customize this mapping)
-shape_map = {
-    "multimodal": "circle",
-    "chat models (RLHF, DPO)": "square",
-    "fine-tuned on domain": "diamond",
-    "pretrained": "triangle",
-    "continuously pretrained": "cross",
-    "base merges and modifications": "star"
-}
-
-# Manually create a condition for point shapes
-shape_condition = alt.condition(
-    alt.datum.Type,
-    alt.Shape('Type:N', scale=alt.Scale(domain=list(shape_map.keys()), range=list(shape_map.values()))),
-    alt.value('circle')  # fallback
+# Melt the grouped DataFrame for easier plotting
+melted = grouped.melt(
+    id_vars=["Type", "Model Count"],
+    value_vars=["Average ⬆️", "CO₂ cost (kg)", "Hub ❤️"],
+    var_name="Metric",
+    value_name="Value"
 )
 
-# Scatter: CO₂ vs Average Score with enhancements
-scatter = alt.Chart(grouped).mark_point(filled=True).encode(
-    x=alt.X("CO₂ cost (kg):Q", title="CO₂ Emissions (kg)"),
-    y=alt.Y("Average ⬆️:Q", title="Average Score"),
-    color=alt.Color("Type:N", legend=alt.Legend(title="Model Type")),
-    shape=shape_condition,
-    size=alt.Size("Model Count:Q", legend=alt.Legend(title="Number of Models"), scale=alt.Scale(range=[60, 300])),
-    tooltip=[
-        alt.Tooltip("Type:N", title="Model Type"),
-        alt.Tooltip("Average ⬆️:Q", title="Avg. Score"),
-        alt.Tooltip("CO₂ cost (kg):Q", title="CO₂ (kg)"),
-        alt.Tooltip("Model Count:Q", title="Count")
-    ]
+# Bubble matrix
+bubble_matrix = alt.Chart(melted).mark_circle().encode(
+    x=alt.X("Type:N", title="Model Type"),
+    y=alt.Y("Metric:N", title="Metric"),
+    size=alt.Size("Model Count:Q", scale=alt.Scale(range=[100, 800]), legend=alt.Legend(title="Model Count")),
+    color=alt.Color("Value:Q", scale=alt.Scale(scheme="blues"), legend=alt.Legend(title="Metric Value")),
+    tooltip=["Type", "Metric", "Value", "Model Count"]
 ).properties(
-    title="Model Type Efficiency: Score vs CO₂",
-).interactive()
-
-# Optional: Efficiency frontier (score = constant * emission)
-line = alt.Chart(grouped).transform_regression(
-    "CO₂ cost (kg)", "Average ⬆️"
-).mark_line(strokeDash=[4, 4], color="gray").encode(
-    x="CO₂ cost (kg):Q",
-    y="Average ⬆️:Q"
+    title="Model Performance Bubble Matrix",
+    width=600,
+    height=300
 )
 
-# Optional: Highlight best model
-best_point = alt.Chart(grouped).transform_window(
-    rank='rank(Average ⬆️)',
-    sort=[alt.SortField("Average ⬆️", order='descending')]
-).transform_filter("datum.rank == 1").mark_text(
-    align='left',
-    dx=5,
-    dy=-5,
-    fontWeight="bold"
-).encode(
-    x="CO₂ cost (kg):Q",
-    y="Average ⬆️:Q",
-    text=alt.value("🏆 Best")
-)
+st.altair_chart(bubble_matrix, use_container_width=True)
 
-# Combine charts
-st.altair_chart((scatter + line + best_point), use_container_width=True)
 
-# --- User Satisfaction vs Score ---
 
-satisfaction = alt.Chart(grouped).mark_point(filled=True).encode(
-    x=alt.X("Hub ❤️:Q", title="User Satisfaction (Hub ❤️)"),
-    y=alt.Y("Average ⬆️:Q", title="Average Score"),
-    color=alt.Color("Type:N", legend=alt.Legend(title="Model Type")),
-    shape=shape_condition,
-    size=alt.Size("Model Count:Q", legend=alt.Legend(title="Number of Models"), scale=alt.Scale(range=[60, 300])),
-    tooltip=[
-        alt.Tooltip("Type:N", title="Model Type"),
-        alt.Tooltip("Hub ❤️:Q", title="User Satisfaction"),
-        alt.Tooltip("Average ⬆️:Q", title="Avg. Score"),
-        alt.Tooltip("Model Count:Q", title="Count")
-    ]
-).properties(
-    title="User Satisfaction vs Average Score",
-).interactive()
 
-st.altair_chart(satisfaction, use_container_width=True)
 
 
