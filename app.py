@@ -155,69 +155,54 @@ st.altair_chart(final_chart, use_container_width=True)
 
 
 
-# --- CLEANING & NORMALIZATION ---
+# Exaggerate for visual emphasis
+df["Exaggerated Size"] = df["CO₂ cost (kg)"]**2
 
-# Strip spaces from column names
-grouped.columns = grouped.columns.str.strip()
+carbon_bubbles = alt.Chart(df).mark_circle(opacity=0.85).encode(
+    x=alt.X('random():Q', axis=None, scale=alt.Scale(zero=False)),
+    y=alt.Y('random():Q', axis=None, scale=alt.Scale(zero=False)),
+    size=alt.Size('Exaggerated Size:Q', legend=None, scale=alt.Scale(range=[100, 10000])),
+    color=alt.Color('Type:N', legend=alt.Legend(title='Model Type')),
+    tooltip=["Type", "CO₂ cost (kg):Q", "Average:Q"]
+).properties(
+    title="Relative Carbon Footprint of AI Models (Packed Circles)",
+    width=700,
+    height=500
+).transform_calculate(
+    random='random()'
+)
 
-# Find the real date column (case-insensitive match)
-date_col = next((col for col in grouped.columns if col.lower() == "upload to hub date"), None)
+st.altair_chart(carbon_bubbles, use_container_width=True)
 
-if date_col is None:
-    st.error("⚠️ 'Upload To Hub Date' column not found in the dataset.")
-else:
-    # Drop rows without valid date
-    grouped = grouped.dropna(subset=[date_col])
-    grouped['Date'] = pd.to_datetime(grouped[date_col])
-    grouped['Month'] = grouped['Date'].dt.to_period('M').dt.to_timestamp()
+# Ensure 'Upload To Hub Date' is datetime
+df['Upload To Hub Date'] = pd.to_datetime(df['Upload To Hub Date'], errors='coerce')
+df = df.dropna(subset=['Upload To Hub Date', 'CO₂ cost (kg)', 'Type'])
 
-    # -------------------------------
-    # 🔵 1. PACKED CIRCLES CHART
-    # -------------------------------
+# Extract month
+df['Month'] = df['Upload To Hub Date'].dt.to_period('M').dt.to_timestamp()
 
-    grouped["Exaggerated Size"] = grouped["CO₂ cost (kg)"] ** 2
+# Group + cumulative CO₂ per Type
+monthly_emissions = (
+    df.groupby(['Month', 'Type'])['CO₂ cost (kg)']
+    .sum()
+    .reset_index()
+)
 
-    carbon_bubbles = alt.Chart(grouped).mark_circle(opacity=0.85).encode(
-        x=alt.X('random():Q', axis=None, scale=alt.Scale(zero=False)),
-        y=alt.Y('random():Q', axis=None, scale=alt.Scale(zero=False)),
-        size=alt.Size('Exaggerated Size:Q', legend=None, scale=alt.Scale(range=[100, 10000])),
-        color=alt.Color('Type:N', legend=alt.Legend(title='Model Type')),
-        tooltip=["Type", "CO₂ cost (kg):Q", "Average ⬆️:Q"]
-    ).properties(
-        title="Relative Carbon Footprint of AI Models (Packed Circles)",
-        width=700,
-        height=500
-    ).transform_calculate(
-        random='random()'
-    )
+monthly_emissions['Cumulative CO₂'] = (
+    monthly_emissions.sort_values("Month")
+    .groupby('Type')["CO₂ cost (kg)"]
+    .cumsum()
+)
 
-    st.altair_chart(carbon_bubbles, use_container_width=True)
+stacked_area = alt.Chart(monthly_emissions).mark_area(interpolate='monotone').encode(
+    x=alt.X("Month:T", title="Month"),
+    y=alt.Y("Cumulative CO₂:Q", stack="zero", title="Cumulative CO₂ Emissions (kg)"),
+    color=alt.Color("Type:N", title="Model Type"),
+    tooltip=["Month:T", "Type:N", "Cumulative CO₂:Q"]
+).properties(
+    title="Accumulating Carbon Emissions from AI Models Over Time (Stacked by Type)",
+    width=700,
+    height=400
+)
 
-    # -------------------------------
-    # 🔶 2. CUMULATIVE CO₂ STACKED AREA CHART
-    # -------------------------------
-
-    monthly_emissions = (
-        grouped.groupby(["Month", "Type"])["CO₂ cost (kg)"]
-        .sum()
-        .reset_index()
-    )
-
-    monthly_emissions["Cumulative CO₂"] = (
-        monthly_emissions.sort_values("Month")
-        .groupby("Type")["CO₂ cost (kg)"]
-        .cumsum()
-    )
-
-    stacked_area = alt.Chart(monthly_emissions).mark_area(interpolate='monotone').encode(
-        x=alt.X("Month:T", title="Month"),
-        y=alt.Y("Cumulative CO₂:Q", stack="zero", title="Cumulative CO₂ Emissions (kg)"),
-        color=alt.Color("Type:N", title="Model Type"),
-        tooltip=["Month:T", "Type:N", "Cumulative CO₂:Q"]
-    ).properties(
-        title="Accumulating Carbon Emissions from AI Models Over Time (Stacked by Type)",
-        width=700,
-        height=400
-    )
-
-    st.altair_chart(stacked_area, use_container_width=True)
+st.altair_chart(stacked_area, use_container_width=True)
