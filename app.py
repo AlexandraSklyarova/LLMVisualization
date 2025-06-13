@@ -56,26 +56,25 @@ grouped = df.groupby("Type").agg({
 
 st.title("💡 Open LLM Leaderboard — Streamlit Dashboard")
 
-# Bar Chart: Average Scores by Type
-# Bar Chart with labels on top
+# Bar chart base
 bars = alt.Chart(grouped).transform_fold(
     score_cols,
     as_=["Metric", "Score"]
 ).mark_bar().encode(
     x=alt.X("Metric:N", title="Evaluation Metric"),
     y=alt.Y("Score:Q", title="Average Score"),
-    color=alt.Color("Type:N"),
+    color=alt.Color("Type:N", title="Model Type"),
     column=alt.Column("Type:N", title="Model Type")
 )
 
-# Add text labels on top of bars
+# Add value labels on top of each bar
 labels = alt.Chart(grouped).transform_fold(
     score_cols,
     as_=["Metric", "Score"]
 ).mark_text(
     align='center',
     baseline='bottom',
-    dy=-2,
+    dy=-3,
     fontSize=11,
     fontWeight="bold"
 ).encode(
@@ -85,8 +84,10 @@ labels = alt.Chart(grouped).transform_fold(
     column=alt.Column("Type:N")
 )
 
-# Combine and render
-score_chart = (bars + labels).properties(title="Evaluation Metrics by Model Type")
+# Combine charts
+score_chart = (bars + labels).properties(
+    title="Evaluation Metrics by Model Type"
+)
 
 st.altair_chart(score_chart, use_container_width=True)
 
