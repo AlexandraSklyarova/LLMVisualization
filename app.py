@@ -381,50 +381,6 @@ st.altair_chart(combined_chart, use_container_width=True)
 
 
 
-
-
-df.columns = df.columns.str.strip()
-df = df.rename(columns={"Average ⬆️": "Average"})
-
-# Drop missing values and convert types
-df = df.dropna(subset=["Hub ❤️", "Average", "eval_name"])
-df["Hub ❤️"] = pd.to_numeric(df["Hub ❤️"], errors="coerce")
-df["Average"] = pd.to_numeric(df["Average"], errors="coerce")
-df = df.dropna(subset=["Hub ❤️", "Average"])
-
-# Bin satisfaction (10-point range) and average score (5-point range)
-df["Satisfaction_Bin"] = (df["Hub ❤️"] // 10) * 10
-df["Average_Bin"] = (df["Average"] // 5) * 5
-
-# Count eval_name entries per bin
-binned = df.groupby(["Satisfaction_Bin", "Average_Bin"])["eval_name"].count().reset_index(name="Eval Count")
-
-# Define brush selection
-brush = alt.selection_interval(encodings=["x", "y"])
-
-# Create the heatmap with brushing
-heatmap = alt.Chart(binned).mark_rect().encode(
-    x=alt.X("Satisfaction_Bin:O", title="User Satisfaction Bin (10 pt range)"),
-    y=alt.Y("Average_Bin:O", title="Average Score Bin (5 pt range)", sort="ascending"),
-    color=alt.condition(brush,
-                        alt.Color("Eval Count:Q", scale=alt.Scale(scheme="blues"), title="Evaluation Count"),
-                        alt.value("lightgray")),
-    tooltip=["Satisfaction_Bin", "Average_Bin", "Eval Count"]
-).add_params(
-    brush
-).properties(
-    width=600,
-    height=500,
-    title="Evaluation Density by User Satisfaction and Average Score"
-)
-
-# Display in Streamlit
-st.altair_chart(heatmap, use_container_width=True)
-
-
-
-
-
 df.columns = df.columns.str.strip()
 df = df.rename(columns={"Average ⬆️": "Average"})
 df = df.dropna(subset=["Hub ❤️", "Average", "eval_name"])
@@ -455,7 +411,7 @@ heatmap = alt.Chart(binned).mark_rect().encode(
 ).add_params(brush).properties(
     width=600,
     height=500,
-    title="🧪 Evaluation Density by Satisfaction & Score (Brush to Explore)"
+    title=" Evaluation Density by Satisfaction & Score (Brush to Explore)"
 )
 
 # --- Display in Streamlit ---
