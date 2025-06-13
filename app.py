@@ -63,54 +63,8 @@ st.title("💡 Open LLM Leaderboard — Streamlit Dashboard")
 
 
 
-# Transform data for faceted chart
-long_df = grouped.melt(
-    id_vars=["Type"],
-    value_vars=score_cols,
-    var_name="Metric",
-    value_name="Score"
-)
-
-# Get unique model types
-types = long_df["Type"].unique().tolist()
-
-# Chunk types into rows of 3
-def chunks(lst, n):
-    for i in range(0, len(lst), n):
-        yield lst[i:i + n]
-
-# Build chart for each type and lay out
-for row_types in chunks(types, 3):
-    cols = st.columns(len(row_types))  # create as many columns as needed
-    for i, t in enumerate(row_types):
-        chart = alt.Chart(long_df).transform_filter(
-            alt.datum.Type == t
-        ).encode(
-            x=alt.X("Metric:N", title="Evaluation Metric"),
-            y=alt.Y("Score:Q", title="Avg Score"),
-            color=alt.Color("Metric:N", legend=None)
-        )
-
-        composed = alt.layer(
-            chart.mark_bar(),
-            chart.mark_text(
-                align="center",
-                baseline="bottom",
-                dy=-3,
-                fontSize=11
-            ).encode(text=alt.Text("Score:Q", format=".2f"))
-        ).properties(
-            title=t,
-            width=400,
-            height=600
-        )
-
-        cols[i].altair_chart(composed, use_container_width=True)
-
-
-
-
-#new 
+# Transform data for faceted chart 
+st.markdown("### Select legend to view individual metrics across all charts")
 
 long_df = grouped.melt(
     id_vars=["Type"],
