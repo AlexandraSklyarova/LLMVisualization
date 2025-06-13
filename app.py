@@ -77,23 +77,26 @@ st.altair_chart(score_chart, use_container_width=True)
 df.columns = df.columns.str.strip()
 df['Type'] = df['Type'].astype(str)
 
-# Count entries per Type
+# Count per Type
 type_counts = df['Type'].value_counts().reset_index()
 type_counts.columns = ['Type', 'Count']
 type_counts["Percent"] = type_counts["Count"] / type_counts["Count"].sum()
 
-# Calculate angles for label placement
+# Angle calculations
 type_counts["startAngle"] = type_counts["Percent"].cumsum() - type_counts["Percent"]
 type_counts["endAngle"] = type_counts["Percent"].cumsum()
 type_counts["midAngle"] = (type_counts["startAngle"] + type_counts["endAngle"]) / 2
-
-# Convert mid-angles to radians
 type_counts["midAngle_rad"] = 2 * np.pi * type_counts["midAngle"]
 
-# Label position: slightly outside the pie
-label_radius = 120
-type_counts["x"] = label_radius * np.cos(type_counts["midAngle_rad"])
-type_counts["y"] = label_radius * np.sin(type_counts["midAngle_rad"])
+# Radius values (adjust as needed)
+label_radius = 115
+line_radius = 105
+
+# Label positions
+type_counts["label_x"] = label_radius * np.cos(type_counts["midAngle_rad"])
+type_counts["label_y"] = label_radius * np.sin(type_counts["midAngle_rad"])
+type_counts["line_x"] = line_radius * np.cos(type_counts["midAngle_rad"])
+type_counts["line_y"] = line_radius * np.sin(type_counts["midAngle_rad"])
 
 # Pie chart
 pie = alt.Chart(type_counts).mark_arc(innerRadius=50, outerRadius=100).encode(
@@ -106,20 +109,26 @@ pie = alt.Chart(type_counts).mark_arc(innerRadius=50, outerRadius=100).encode(
     title='Distribution of Model Types'
 )
 
-# Text labels outside the pie
-labels = alt.Chart(type_counts).mark_text(
-    align='center',
-    fontSize=12,
-    fontWeight="bold"
-).encode(
-    x=alt.X('x:Q', axis=None),
-    y=alt.Y('y:Q', axis=None),
-    text=alt.Text('Count:Q')
+# Connector lines
+connectors = alt.Chart(type_counts).mark_rule(stroke='gray').encode(
+    x='line_x:Q',
+    y='line_y:Q',
+    x2='label_x:Q',
+    y2='label_y:Q'
 )
 
-# Combine
-st.altair_chart(pie + labels, use_container_width=True)
+# Text labels
+labels = alt.Chart(type_counts).mark_text(
+    fontSize=11,
+    fontWeight="bold"
+).encode(
+    x='label_x:Q',
+    y='label_y:Q',
+    text=alt.Text('Count:Q'),
+)
 
+# Combine all
+st.altair_chart(pie + connectors + labels, use_container_width=True)
 
 
 
