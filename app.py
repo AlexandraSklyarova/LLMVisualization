@@ -399,12 +399,19 @@ df["Average_Bin"] = (df["Average"] // 5) * 5
 # Count eval_name entries per bin
 binned = df.groupby(["Satisfaction_Bin", "Average_Bin"])["eval_name"].count().reset_index(name="Eval Count")
 
-# Create the heatmap
+# Define brush selection
+brush = alt.selection_interval(encodings=["x", "y"])
+
+# Create the heatmap with brushing
 heatmap = alt.Chart(binned).mark_rect().encode(
     x=alt.X("Satisfaction_Bin:O", title="User Satisfaction Bin (10 pt range)"),
     y=alt.Y("Average_Bin:O", title="Average Score Bin (5 pt range)", sort="ascending"),
-    color=alt.Color("Eval Count:Q", scale=alt.Scale(scheme="blues"), title="Evaluation Count"),
+    color=alt.condition(brush,
+                        alt.Color("Eval Count:Q", scale=alt.Scale(scheme="blues"), title="Evaluation Count"),
+                        alt.value("lightgray")),
     tooltip=["Satisfaction_Bin", "Average_Bin", "Eval Count"]
+).add_params(
+    brush
 ).properties(
     width=600,
     height=500,
