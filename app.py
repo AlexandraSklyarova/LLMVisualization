@@ -109,46 +109,6 @@ pie = alt.Chart(type_counts).mark_arc(innerRadius=50, outerRadius=100).encode(
 
 pie
 
-df.columns = df.columns.str.strip()
-df['Submission Date'] = pd.to_datetime(df['Submission Date'], errors='coerce')
-df = df[df['Type'].notna() & df['Average ⬆️'].notna()]
-
-# Optional: downsample to reduce visual clutter
-df = df.sort_values('Submission Date')
-
-# Line chart of average scores over time per Type
-line_chart = alt.Chart(df).mark_line(point=True).encode(
-    x=alt.X("Submission Date:T", title="Date"),
-    y=alt.Y("Average ⬆️:Q", title="Average Score"),
-    color=alt.Color("Type:N"),
-    tooltip=["Model", "Type", "Average ⬆️", "Submission Date", "CO₂ cost (kg)", "Hub ❤️"]
-).properties(
-    title="📈 Evolution of LLM Performance Over Time by Model Type"
-)
-
-# Annotations: define key events manually
-annotations = pd.DataFrame([
-    {"date": "2023-05-01", "note": "Instruction-tuned models begin dominating."},
-    {"date": "2023-11-15", "note": "CO₂ cost drops for chat models while scores remain high."},
-    {"date": "2024-03-01", "note": "Base models decline in user satisfaction."},
-    {"date": "2024-07-01", "note": "New wave of high-performing 'chat' models"},
-])
-annotations["date"] = pd.to_datetime(annotations["date"])
-
-annotation_layer = alt.Chart(annotations).mark_rule(color="gray", strokeDash=[4,2]).encode(
-    x="date:T"
-).properties()
-
-text_layer = alt.Chart(annotations).mark_text(align="left", dx=5, dy=-5, color="black").encode(
-    x="date:T",
-    y=alt.value(100),  # position near top
-    text="note:N"
-)
-
-# Combine
-final_chart = (line_chart + annotation_layer + text_layer).interactive()
-st.altair_chart(final_chart, use_container_width=True)
-
 
 
 
@@ -173,6 +133,7 @@ carbon_bubbles = alt.Chart(df).mark_circle(opacity=0.85).encode(
 )
 
 st.altair_chart(carbon_bubbles, use_container_width=True)
+
 
 # Ensure 'Upload To Hub Date' is datetime
 df['Upload To Hub Date'] = pd.to_datetime(df['Upload To Hub Date'], errors='coerce')
@@ -216,8 +177,7 @@ st.altair_chart(stacked_area, use_container_width=True)
 
 
 
-import altair as alt
-import pandas as pd
+
 
 # Clean column names and ensure numeric types
 df.columns = df.columns.str.strip()
