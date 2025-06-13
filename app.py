@@ -63,28 +63,28 @@ st.markdown("###  LLM Evaluation Metrics Overview")
 
 evaluation_summary = {
     "IFEval": {
-        "": "Tests if a model can follow explicit formatting instructions (e.g., include keyword X, use format Y). Focus is on format adherence."
+        "Description": "Tests if a model can follow explicit formatting instructions (e.g., include keyword X, use format Y). Focus is on format adherence."
     },
     "BBH": {
-        "": "Challenging reasoning benchmark of 23 BigBench tasks (math, logic, language). Correlates with human judgment."
+        "Description": "Challenging reasoning benchmark of 23 BigBench tasks (math, logic, language). Correlates with human judgment."
     },
     "MATH Lvl 5": {
-        "": "Level 5 high school math competition problems. Requires exact output format using LaTeX/Asymptote."
+        "Description": "Level 5 high school math competition problems. Requires exact output format using LaTeX/Asymptote."
     },
     "GPQA": {
-        "": "Graduate-level STEM questions validated by experts (biology, chemistry, physics). Gated to avoid contamination."
+        "Description": "Graduate-level STEM questions validated by experts (biology, chemistry, physics). Gated to avoid contamination."
     },
     "MuSR": {
-        "": "Long, multistep reasoning problems (e.g., mysteries, logistics). Requires long-context understanding."
+        "Description": "Long, multistep reasoning problems (e.g., mysteries, logistics). Requires long-context understanding."
     },
     "MMLU-Pro": {
-        "": "Refined version of MMLU with 10 choices, higher difficulty, cleaner data, and expert review."
+        "Description": "Refined version of MMLU with 10 choices, higher difficulty, cleaner data, and expert review."
     }
 }
 
 # Reformat into a transposed DataFrame
 evaluation_df = pd.DataFrame.from_dict(evaluation_summary, orient="columns")
-evaluation_df.index.name = ""
+evaluation_df.index.name = "Info"
 
 # Show the table
 st.table(evaluation_df)
@@ -215,11 +215,16 @@ monthly_counts['Cumulative Models'] = (
 )
 
 # Main line chart
+# Main line chart with formatted x-axis and tooltip
 line_chart = alt.Chart(monthly_counts).mark_line().encode(
-    x=alt.X("Month:T", title="Month"),
+    x=alt.X("Month:T", title="Month", axis=alt.Axis(format="%b %Y")),  # e.g., Jan 2024
     y=alt.Y("Cumulative Models:Q", title="Total Number of Models"),
     color=alt.Color("Type:N", title="Model Type"),
-    tooltip=["Month:T", "Type:N", "Cumulative Models:Q"]
+    tooltip=[
+        alt.Tooltip("Month:T", title="Month", format="%B %Y"),  # e.g., January 2024
+        alt.Tooltip("Type:N", title="Model Type"),
+        alt.Tooltip("Cumulative Models:Q", title="Cumulative Models", format=",.0f")
+    ]
 )
 
 # Vertical dashed annotation line for April 2025
@@ -228,13 +233,13 @@ event_rule = alt.Chart(pd.DataFrame({"date": [event_date]})).mark_rule(
     strokeDash=[4, 4],
     color="red"
 ).encode(
-    x="date:T"
+    x=alt.X("date:T")
 )
 
 # Text label for the event
 event_text = alt.Chart(pd.DataFrame({
     "date": [event_date],
-    "label": ["Publication of Visualization-of-Thought (VoT) and launch of Gemini 1.5"]
+    "label": ["Publication of Visualization-of-Thought (VoT)"]
 })).mark_text(
     align="left",
     baseline="top",
@@ -252,11 +257,12 @@ event_text = alt.Chart(pd.DataFrame({
 # Combine everything
 final_chart = (line_chart + event_rule + event_text).properties(
     title="Cumulative Number of LLM Models Released Over Time",
-    width=1200,
-    height=600
+    width=1100,
+    height=500
 )
 
 st.altair_chart(final_chart, use_container_width=True)
+
 
 
 
