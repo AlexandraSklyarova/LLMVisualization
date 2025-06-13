@@ -206,3 +206,52 @@ stacked_area = alt.Chart(monthly_emissions).mark_area(interpolate='monotone').en
 )
 
 st.altair_chart(stacked_area, use_container_width=True)
+
+
+# Ensure columns are clean
+df.columns = df.columns.str.strip()
+
+# Clean for plotting
+df = df.dropna(subset=["Hub ❤️", "Average", "Type"])
+
+# --- Interactive Selector ---
+type_selection = alt.selection_single(
+    fields=["Type"], 
+    name="Select", 
+    bind=alt.binding_select(options=sorted(df["Type"].unique())), 
+    init={"Type": df["Type"].value_counts().idxmax()}
+)
+
+# --- Highlighted Background (Halo Layer) ---
+highlight = alt.Chart(df).mark_circle(size=300, opacity=0.1, stroke='black', strokeWidth=1).encode(
+    x=alt.X("Hub ❤️:Q"),
+    y=alt.Y("Average:Q"),
+).transform_filter(
+    type_selection
+)
+
+# --- Main Point Layer ---
+points = alt.Chart(df).mark_circle(size=120).encode(
+    x=alt.X("Hub ❤️:Q", title="User Satisfaction (Hub ❤️)"),
+    y=alt.Y("Average:Q", title="Average Score"),
+    color=alt.Color("Type:N", legend=alt.Legend(title="Model Type")),
+    tooltip=["Type", "Hub ❤️", "Average"]
+)
+
+# --- Trend Line ---
+trend = alt.Chart(df).transform_regression(
+    "Hub ❤️", "Average", groupby=["Type"]
+).mark_line(strokeDash=[3, 3]).encode(
+    x="Hub ❤️:Q",
+    y="Average:Q",
+    color="Type:N"
+)
+
+# --- Combine Layers ---
+combined = (highlight + points + trend).add_selection(type_selection).properties(
+    title="User Satisfaction vs Average Score (Interactive Highlight + Trend)",
+    width=700,
+    height=450
+)
+
+st.altair_chart(combined, use_container_width=True)
