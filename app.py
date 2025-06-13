@@ -59,18 +59,43 @@ st.title("💡 Open LLM Leaderboard — Streamlit Dashboard")
 
 
 
-st.markdown("### 📊 LLM Evaluation Metrics Overview")
+st.markdown("###  LLM Evaluation Metrics Overview")
 
-st.markdown("""
-| Metric        | Description                                                                                                                                                                                                                                                                  | Source |
-|---------------|------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|--------|
-| **IFEval**     | Tests whether a model can follow **explicit formatting instructions** (e.g., "use keyword X", "structure Y"). Focus is on **format adherence**, not content quality. This allows for rigorous automatic evaluation.                                                         | [IFEval (2023)](https://arxiv.org/abs/2311.07911) |
-| **BBH**        | A hard subset of **23 BigBench tasks**, designed for **objective, challenging, and diverse reasoning tasks** (e.g., multistep math, boolean logic, sarcasm detection). **Correlates well with human preferences** and provides statistically significant insights.       | [BBH (2022)](https://arxiv.org/abs/2210.09261) |
-| **MATH Lvl 5** | High-school level **math competition problems**, presented with consistent **LaTeX + Asymptote** formatting. Requires **precise structured responses**. Only includes **Level 5** difficulty problems.                                                                      | [MATH (2021)](https://arxiv.org/abs/2103.03874) |
-| **GPQA**       | Expert-authored **graduate-level STEM Q&A** covering biology, physics, chemistry. Carefully validated and **gated for contamination risk**. Designed to test **factual and deep domain knowledge**.                                                                         | [GPQA (2023)](https://arxiv.org/abs/2311.12022) |
-| **MuSR**       | Algorithmically generated problems like **murder mysteries** and **complex team optimizations** (~1000 words each). Requires **long-context, multi-step reasoning**. Most models **perform near random**.                                                                 | [MuSR (2023)](https://arxiv.org/abs/2310.16049) |
-| **MMLU-Pro**   | Updated version of MMLU. Addresses issues like **data contamination**, **low difficulty**, and **noisy questions**. Includes **10 answer choices**, more reasoning, and **expert-reviewed** items. Considered **harder and cleaner** than original MMLU.                   | [MMLU-Pro (2024)](https://arxiv.org/abs/2406.01574) |
-""")
+evaluation_df = pd.DataFrame([
+    {
+        "Metric": "IFEval",
+        "Description": "Tests if a model can follow explicit formatting instructions (e.g., include keyword X, use format Y). Focus is on format adherence, not content.",
+        "Source": "https://arxiv.org/abs/2311.07911"
+    },
+    {
+        "Metric": "BBH",
+        "Description": "A set of 23 challenging BigBench tasks for evaluating reasoning, math, logic, and language understanding. Correlates well with human judgment.",
+        "Source": "https://arxiv.org/abs/2210.09261"
+    },
+    {
+        "Metric": "MATH Lvl 5",
+        "Description": "High school-level math competition problems in LaTeX format. Only includes the most difficult level (Level 5).",
+        "Source": "https://arxiv.org/abs/2103.03874"
+    },
+    {
+        "Metric": "GPQA",
+        "Description": "Graduate-level science questions authored by experts (biology, physics, chemistry). Designed to be difficult for non-experts and rigorously validated.",
+        "Source": "https://arxiv.org/abs/2311.12022"
+    },
+    {
+        "Metric": "MuSR",
+        "Description": "Long, algorithmically generated problems (~1000 words), requiring multi-step reasoning and contextual integration (e.g., mysteries, logistics).",
+        "Source": "https://arxiv.org/abs/2310.16049"
+    },
+    {
+        "Metric": "MMLU-Pro",
+        "Description": "Improved version of MMLU with cleaner, more challenging questions, more answer choices (10), and expert reviews to reduce noise.",
+        "Source": "https://arxiv.org/abs/2406.01574"
+    }
+])
+
+st.table(evaluation_df)
+
 
 
 
@@ -112,8 +137,8 @@ for row_types in chunks(types, 3):
             ).encode(text=alt.Text("Score:Q", format=".2f"))
         ).properties(
             title=t,
-            width=220,
-            height=300
+            width=400,
+            height=600
         )
 
         cols[i].altair_chart(composed, use_container_width=True)
