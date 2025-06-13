@@ -440,7 +440,6 @@ bubbles = alt.Chart(bubble_data).mark_circle(opacity=0.9).encode(
     height=600
 )
 
-# --- Labels on bubbles ---
 labels = alt.Chart(bubble_data).mark_text(
     fontSize=11,
     fontWeight="bold",
@@ -476,12 +475,9 @@ area_chart = alt.Chart(monthly).mark_area(interpolate="monotone").encode(
 )
 
 # --- Combine both charts vertically ---
-combined_chart = alt.vconcat(bubble_chart, area_chart).resolve_legend(
-    color="shared"
-)
-
-# --- Render in Streamlit ---
+combined_chart = alt.vconcat(bubble_chart, area_chart).resolve_legend(color="shared")
 st.altair_chart(combined_chart, use_container_width=True)
+
 
 
 
