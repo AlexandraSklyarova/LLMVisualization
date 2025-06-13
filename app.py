@@ -395,40 +395,50 @@ st.altair_chart(final_chart, use_container_width=True)
 
 
 
-df = pd.read_csv("open-llm-leaderboards.csv")
-
-# --- Clean and preprocess ---
 df.columns = df.columns.str.strip()
 df = df.rename(columns={"Average ⬆️": "Average"})
-df = df.dropna(subset=["Hub ❤️", "Average", "Type", "Model"])
+
+df = df.dropna(subset=["Hub ❤️", "Average", "Type"])
 df["Hub ❤️"] = pd.to_numeric(df["Hub ❤️"], errors="coerce")
 df["Average"] = pd.to_numeric(df["Average"], errors="coerce")
 df = df.dropna(subset=["Hub ❤️", "Average"])
 
 # --- Sidebar filters ---
 st.sidebar.header("Filters")
-model_types = df["Type"].unique().tolist()
-selected_types = st.sidebar.multiselect("Select Model Types", model_types, default=model_types)
+types = df["Type"].unique().tolist()
+selected_types = st.sidebar.multiselect("Model Types", types, default=types)
 df = df[df["Type"].isin(selected_types)]
 
-# --- Main chart ---
-base = alt.Chart(df).encode(
-    x=alt.X("Hub ❤️:Q", title="User Satisfaction Score"),
-    y=alt.Y("Average:Q", title="Average Evaluation Score"),
-    color=alt.Color("Type:N", title="Model Type"),
-    tooltip=["Model", "Type", "Hub ❤️", "Average"]
-)
+# --- Check if data remains ---
+if df.empty:
+    st.warning("No data available after filtering.")
+else:
+    # --- Heatmap ---
+    heatmap = alt.Chart(df).mark_rect().encode(
+        x=alt.X("Hub ❤️:Q", bin=alt.Bin(maxbins=25), title="User Satisfaction"),
+        y=alt.Y("Average:Q", bin=alt.Bin(maxbins=25), title="Average Score"),
+        color=alt.Color("count():Q", title="Model Count", scale=alt.Scale(scheme="oranges")),
+        tooltip=["count():Q"]
+    ).properties(
+        width=500,
+        height=400,
+        title="📊 Heatmap: User Satisfaction vs Average Score"
+    )
 
-points = base.mark_circle(size=80, opacity=0.7)
-trend = base.transform_regression("Hub ❤️", "Average").mark_line(
-    strokeDash=[4, 4], color="black"
-)
+    # --- Marginal Histograms ---
+    x_hist = alt.Chart(df).mark_bar(opacity=0.4).encode(
+        x=alt.X("Hub ❤️:Q", bin=alt.Bin(maxbins=25)),
+        y=alt.Y("count():Q", title="Count")
+    ).properties(height=80)
 
-final_chart = (points + trend).properties(
-    title="💬 Relationship Between User Satisfaction and Evaluation Score",
-    width=800,
-    height=600
-).interactive()
+    y_hist = alt.Chart(df).mark_bar(opacity=0.4).encode(
+        x=alt.X("count():Q", title="Count"),
+        y=alt.Y("Average:Q", bin=alt.Bin(maxbins=25))
+    ).properties(width=80)
 
-# --- Render ---
-st.altair_chart(final_chart, use_container_width=True)
+    # --- Combine ---
+    main = alt.hconcat(heatmap, y_hist)
+    final = alt.vconcat(x_hist, main).resolve_axis(x='shared', y='shared')
+
+    st.altair_chart(final, use_container_width=True)
+
