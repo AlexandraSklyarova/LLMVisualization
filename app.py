@@ -369,21 +369,29 @@ combined_chart = alt.vconcat(bubble_chart, area_chart).resolve_legend(color="sha
 st.altair_chart(combined_chart, use_container_width=True)
 
 
+grouped = grouped.rename(columns={"Hub ❤️": "Hub_Score", "Average ⬆️": "Average_Score"})
+
+# Build the heatmap
 heatmap = alt.Chart(grouped) \
-    .transform_bin("binned_satisfaction", field="Hub ❤️", bin=alt.Bin(maxbins=40)) \
-    .transform_bin("binned_score", field="Average ⬆️", bin=alt.Bin(maxbins=40)) \
+    .transform_bin("binned_satisfaction", field="Hub_Score", bin=alt.Bin(maxbins=40)) \
+    .transform_bin("binned_average", field="Average_Score", bin=alt.Bin(maxbins=40)) \
     .transform_aggregate(
         count='count()',
-        groupby=['binned_satisfaction', 'binned_score']
+        groupby=['binned_satisfaction', 'binned_average']
     ) \
     .mark_rect() \
     .encode(
-        x='binned_satisfaction:Q',
-        y='binned_score:Q',
-        color='count:Q'
+        x=alt.X("binned_satisfaction:Q", title="User Satisfaction"),
+        y=alt.Y("binned_average:Q", title="Average Score"),
+        color=alt.Color("count:Q", scale=alt.Scale(scheme='blues'), title="Model Count"),
+        tooltip=["count:Q"]
+    ).properties(
+        width=600,
+        height=500,
+        title="Heatmap of Model Count by User Satisfaction and Average Score"
     )
 
-heatmap
+st.altair_chart(heatmap, use_container_width=True)
 
 
 
