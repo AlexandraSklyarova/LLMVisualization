@@ -398,8 +398,8 @@ df["CO₂ cost (kg)"] = pd.to_numeric(df["CO₂ cost (kg)"], errors="coerce")
 df["Upload To Hub Date"] = pd.to_datetime(df["Upload To Hub Date"], errors="coerce")
 df = df.dropna(subset=["CO₂ cost (kg)", "Upload To Hub Date"])
 
-# --- Create selection ---
-click = alt.selection_point(fields=["Type"])
+# --- Create a linked selection on Type ---
+type_select = alt.selection_point(fields=["Type"], bind="legend")
 
 # --- Bubble chart data ---
 agg_df = df.groupby("Type", as_index=False)["CO₂ cost (kg)"].sum()
@@ -420,25 +420,24 @@ def polar_positions(n, radius_step=0.4):
 
 agg_df["x"], agg_df["y"] = polar_positions(len(agg_df))
 
-# --- Bubble chart with opacity condition ---
-bubbles = alt.Chart(agg_df).mark_circle(opacity=0.9).encode(
+# --- Bubble chart with linked selection ---
+bubble_chart = alt.Chart(agg_df).mark_circle(opacity=0.9).encode(
     x=alt.X("x:Q", axis=None),
     y=alt.Y("y:Q", axis=None),
     size=alt.Size("Size:Q", scale=alt.Scale(range=[2500, 30000]), legend=None),
     color=alt.Color("Type:N", legend=None),
-    opacity=alt.condition(click, alt.value(1.0), alt.value(0.2)),
+    opacity=alt.condition(type_select, alt.value(1.0), alt.value(0.15)),
     tooltip=[
         alt.Tooltip("Type:N", title="Model Type"),
         alt.Tooltip("CO₂ cost (kg):Q", title="Total CO₂ (kg)", format=",.0f")
     ]
-).add_params(click).properties(
+).add_params(type_select).properties(
     title="Packed Bubble Chart of CO₂ Emissions by Model Type",
     width=700,
     height=600
 )
 
-# Labels
-labels = alt.Chart(agg_df).mark_text(
+bubble_labels = alt.Chart(agg_df).mark_text(
     fontSize=11,
     fontWeight="bold",
     color="black"
@@ -446,34 +445,34 @@ labels = alt.Chart(agg_df).mark_text(
     x="x:Q",
     y="y:Q",
     text="CO₂ Rounded:Q",
-    opacity=alt.condition(click, alt.value(1.0), alt.value(0.2))
+    opacity=alt.condition(type_select, alt.value(1.0), alt.value(0.15))
 )
 
-st.altair_chart(bubbles + labels, use_container_width=True)
+st.altair_chart(bubble_chart + bubble_labels, use_container_width=True)
 
-# --- Stacked area chart data ---
+# --- Line chart data ---
 df["Month"] = df["Upload To Hub Date"].dt.to_period('M').dt.to_timestamp()
 monthly = df.groupby(["Month", "Type"])["CO₂ cost (kg)"].sum().reset_index()
 monthly["Cumulative CO₂"] = monthly.sort_values("Month").groupby("Type")["CO₂ cost (kg)"].cumsum()
 
-# --- Stacked area chart ---
-area = alt.Chart(monthly).mark_area(interpolate="monotone").encode(
+# --- Line chart linked to same selection ---
+line_chart = alt.Chart(monthly).mark_area(interpolate="monotone").encode(
     x=alt.X("Month:T", title="Month", axis=alt.Axis(format="%b %Y")),
     y=alt.Y("Cumulative CO₂:Q", title="Cumulative CO₂ Emissions (kg)", stack="zero"),
     color=alt.Color("Type:N", legend=alt.Legend(title="Model Type")),
-    opacity=alt.condition(click, alt.value(1.0), alt.value(0.2)),
+    opacity=alt.condition(type_select, alt.value(1.0), alt.value(0.15)),
     tooltip=[
         alt.Tooltip("Month:T", title="Month", format="%B %Y"),
         alt.Tooltip("Type:N", title="Model Type"),
-        alt.Tooltip("Cumulative CO₂:Q", format=",.0f", title="Cumulative CO₂ (kg)")
+        alt.Tooltip("Cumulative CO₂:Q", title="Cumulative CO₂ (kg)", format=",.0f")
     ]
-).add_params(click).properties(
+).add_params(type_select).properties(
     title="Cumulative Carbon Emissions Over Time (Stacked by Type)",
     width=1000,
     height=500
 )
 
-st.altair_chart(area, use_container_width=True)
+st.altair_chart(line_chart, use_container_width=True)
 
 
 
