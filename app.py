@@ -118,52 +118,62 @@ pie
 df.columns = df.columns.str.strip()
 df = df.rename(columns={"Average ⬆️": "Average"})
 
-# Drop missing values
 df = df.dropna(subset=["CO₂ cost (kg)", "Type"])
 df["CO₂ cost (kg)"] = pd.to_numeric(df["CO₂ cost (kg)"], errors="coerce")
 df = df.dropna(subset=["CO₂ cost (kg)"])
 
-# Group by Type
+# Aggregate by Type
 agg_df = df.groupby("Type", as_index=False)["CO₂ cost (kg)"].sum()
 agg_df["CO₂ Rounded"] = agg_df["CO₂ cost (kg)"].round().astype(int)
-agg_df["Exaggerated Size"] = agg_df["CO₂ cost (kg)"] ** 3
+agg_df["Size"] = agg_df["CO₂ cost (kg)"] ** 2
 
-# Sort by CO₂ and lay out in grid (simulate packed layout)
+# --- POSITION CIRCLES IN SPIRAL (SIMULATED PACKING) ---
 agg_df = agg_df.sort_values("CO₂ cost (kg)", ascending=False).reset_index(drop=True)
-n_cols = 5  # Number of bubbles per row
-agg_df["x"] = agg_df.index % n_cols
-agg_df["y"] = -(agg_df.index // n_cols)  # Flip Y axis for visual top-down
 
-# Bubble chart
+# Polar layout
+def polar_positions(n, radius_step=1.5):
+    angles = []
+    radii = []
+    for i in range(n):
+        r = radius_step * np.sqrt(i)
+        theta = i * 137.5  # Golden angle (degrees)
+        angles.append(np.deg2rad(theta))
+        radii.append(r)
+    x = [r * np.cos(a) for r, a in zip(radii, angles)]
+    y = [r * np.sin(a) for r, a in zip(radii, angles)]
+    return x, y
+
+agg_df["x"], agg_df["y"] = polar_positions(len(agg_df))
+
+# --- BUBBLE CHART ---
 bubbles = alt.Chart(agg_df).mark_circle(opacity=0.8).encode(
-    x=alt.X("x:O", axis=None),
-    y=alt.Y("y:O", axis=None),
-    size=alt.Size("Exaggerated Size:Q", legend=None, scale=alt.Scale(range=[800, 10000])),
+    x=alt.X("x:Q", axis=None),
+    y=alt.Y("y:Q", axis=None),
+    size=alt.Size("Size:Q", scale=alt.Scale(range=[1000, 10000]), legend=None),
     color=alt.Color("Type:N", legend=alt.Legend(title="Model Type")),
     tooltip=[
         alt.Tooltip("Type:N", title="Model Type"),
         alt.Tooltip("CO₂ cost (kg):Q", title="Total CO₂ (kg)", format=",.0f")
     ]
 ).properties(
-    width=200,
-    height=200,
-    title="Total CO₂ Emissions by Model Type (Bubble Grid)"
+    title="Packed Bubble Chart of CO₂ Emissions by Model Type",
+    width=700,
+    height=600
 )
 
-# Labels for CO₂ amount
+# --- LABELS ---
 labels = alt.Chart(agg_df).mark_text(
-    fontSize=12,
+    fontSize=11,
     fontWeight="bold",
     color="black"
 ).encode(
-    x="x:O",
-    y="y:O",
+    x="x:Q",
+    y="y:Q",
     text="CO₂ Rounded:Q"
 )
 
-# Combine and show
+# --- COMBINE ---
 st.altair_chart(bubbles + labels, use_container_width=True)
-
 
 
 # Ensure 'Upload To Hub Date' is datetime
