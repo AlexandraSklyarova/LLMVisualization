@@ -383,6 +383,7 @@ heatmap = alt.Chart(grouped) \
         color='count:Q'
     )
 
+heatmap
 
 
 
