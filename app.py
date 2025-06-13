@@ -57,6 +57,23 @@ grouped = df.groupby("Type").agg({
 
 st.title("💡 Open LLM Leaderboard — Streamlit Dashboard")
 
+
+
+st.markdown("### 📊 LLM Evaluation Metrics Overview")
+
+st.markdown("""
+| Metric        | Description                                                                                                                                                                                                                                                                  | Source |
+|---------------|------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|--------|
+| **IFEval**     | Tests whether a model can follow **explicit formatting instructions** (e.g., "use keyword X", "structure Y"). Focus is on **format adherence**, not content quality. This allows for rigorous automatic evaluation.                                                         | [IFEval (2023)](https://arxiv.org/abs/2311.07911) |
+| **BBH**        | A hard subset of **23 BigBench tasks**, designed for **objective, challenging, and diverse reasoning tasks** (e.g., multistep math, boolean logic, sarcasm detection). **Correlates well with human preferences** and provides statistically significant insights.       | [BBH (2022)](https://arxiv.org/abs/2210.09261) |
+| **MATH Lvl 5** | High-school level **math competition problems**, presented with consistent **LaTeX + Asymptote** formatting. Requires **precise structured responses**. Only includes **Level 5** difficulty problems.                                                                      | [MATH (2021)](https://arxiv.org/abs/2103.03874) |
+| **GPQA**       | Expert-authored **graduate-level STEM Q&A** covering biology, physics, chemistry. Carefully validated and **gated for contamination risk**. Designed to test **factual and deep domain knowledge**.                                                                         | [GPQA (2023)](https://arxiv.org/abs/2311.12022) |
+| **MuSR**       | Algorithmically generated problems like **murder mysteries** and **complex team optimizations** (~1000 words each). Requires **long-context, multi-step reasoning**. Most models **perform near random**.                                                                 | [MuSR (2023)](https://arxiv.org/abs/2310.16049) |
+| **MMLU-Pro**   | Updated version of MMLU. Addresses issues like **data contamination**, **low difficulty**, and **noisy questions**. Includes **10 answer choices**, more reasoning, and **expert-reviewed** items. Considered **harder and cleaner** than original MMLU.                   | [MMLU-Pro (2024)](https://arxiv.org/abs/2406.01574) |
+""")
+
+
+
 # Transform data for faceted chart
 long_df = grouped.melt(
     id_vars=["Type"],
