@@ -151,54 +151,58 @@ st.altair_chart(final_chart, use_container_width=True)
 
 
 
-grouped["Exaggerated Size"] = grouped["CO₂ cost (kg)"]**2  # you can adjust exponent
+# Create exaggerated size for better visual separation
+grouped["Exaggerated Size"] = grouped["CO₂ cost (kg)"]**2  # tweak exponent for visual impact
 
-carbon_bubbles = alt.Chart(grouped).mark_circle(opacity=0.8).encode(
-    x=alt.X('random():Q', axis=None, scale=alt.Scale(zero=False)),  # scatter layout
+# Packed circle-like effect: layout with jitter
+packed_circles = alt.Chart(grouped).mark_circle(opacity=0.85).encode(
+    x=alt.X('random():Q', axis=None, scale=alt.Scale(zero=False)),
     y=alt.Y('random():Q', axis=None, scale=alt.Scale(zero=False)),
-    size=alt.Size('Exaggerated Size:Q', legend=None, scale=alt.Scale(range=[100, 8000])),
+    size=alt.Size('Exaggerated Size:Q', legend=None, scale=alt.Scale(range=[100, 10000])),
     color=alt.Color('Type:N', legend=alt.Legend(title='Model Type')),
     tooltip=["Type", "CO₂ cost (kg):Q", "Average ⬆️:Q"]
 ).properties(
-    title="Visual Carbon Cost of AI Models (Exaggerated Circle Area)",
-    width=600,
-    height=400
+    title="Relative Carbon Footprint of AI Models (Packed Circles)",
+    width=700,
+    height=500
 ).transform_calculate(
-    random='random()'  # for random layout
-).properties(
-    title=" CO2 Output"
+    random='random()'
 )
 
+st.altair_chart(packed_circles, use_container_width=True)
 
-st.altair_chart(carbon_bubbles, use_container_width=True)
-
-
-
-grouped['Date'] = pd.to_datetime(grouped['Date'])  # make sure your data has a valid date
+# Make sure date is in datetime and grouped by month
+grouped['Date'] = pd.to_datetime(grouped['Date'])  # Replace with real column
 grouped['Month'] = grouped['Date'].dt.to_period('M').dt.to_timestamp()
 
-# Group + cumulative CO₂ per type
-monthly = (
-    grouped.sort_values("Month")
-    .groupby(["Type", "Month"])["CO₂ cost (kg)"]
+# Sum emissions per month per type
+monthly_emissions = (
+    grouped.groupby(["Month", "Type"])["CO₂ cost (kg)"]
     .sum()
-    .groupby(level=0).cumsum()
-    .reset_index(name="Cumulative CO₂")
+    .reset_index()
 )
 
-# Line chart
-carbon_line = alt.Chart(monthly).mark_line(point=True).encode(
-    x=alt.X("Month:T", title="Time"),
-    y=alt.Y("Cumulative CO₂:Q", title="Cumulative CO₂ Emissions (kg)"),
+# Compute cumulative sum per Type
+monthly_emissions["Cumulative CO₂"] = (
+    monthly_emissions.sort_values("Month")
+    .groupby("Type")["CO₂ cost (kg)"]
+    .cumsum()
+)
+
+# Stacked area chart
+stacked_area = alt.Chart(monthly_emissions).mark_area(interpolate='monotone').encode(
+    x=alt.X("Month:T", title="Month"),
+    y=alt.Y("Cumulative CO₂:Q", stack="zero", title="Cumulative CO₂ Emissions (kg)"),
     color=alt.Color("Type:N", title="Model Type"),
-    tooltip=["Type", "Month:T", "Cumulative CO₂:Q"]
+    tooltip=["Month:T", "Type:N", "Cumulative CO₂:Q"]
 ).properties(
-    title="Cumulative CO₂ Emissions Over Time by Model Type",
+    title="Accumulating Carbon Emissions from AI Models Over Time (Stacked by Type)",
     width=700,
     height=400
 )
 
-st.altair_chart(carbon_line, use_container_width=True)
+st.altair_chart(stacked_area, use_container_width=True)
+
 
 
 
