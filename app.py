@@ -375,23 +375,24 @@ st.altair_chart(combined_chart, use_container_width=True)
 
 grouped = grouped.rename(columns={"Hub ❤️": "Hub_Score", "Average ⬆️": "Average_Score"})
 
-# Create new binned columns manually
-grouped["Satisfaction_Bin"] = (grouped["Hub_Score"] // 20) * 20
-grouped["Average_Bin"] = (grouped["Average_Score"] // 0.05) * 0.05
+# Manually bin the data
+grouped["Satisfaction_Bin"] = (grouped["Hub_Score"] // 20 * 20).astype(int)
+grouped["Average_Bin"] = (grouped["Average_Score"] // 5 * 5).astype(int)
 
-# Round average bins for cleaner axis labels
-grouped["Average_Bin"] = grouped["Average_Bin"].round(2)
+# Count number of models in each bin
+binned = grouped.groupby(["Satisfaction_Bin", "Average_Bin"]).size().reset_index(name="Count")
 
-# Plot heatmap
-heatmap = alt.Chart(grouped).mark_rect().encode(
-    x=alt.X("Satisfaction_Bin:Q", title="User Satisfaction (Binned by 20)"),
-    y=alt.Y("Average_Bin:Q", title="Average Score (Binned by 0.05)"),
-    color=alt.Color("count():Q", scale=alt.Scale(scheme="blues"), title="Model Count"),
-    tooltip=["count():Q", "Satisfaction_Bin", "Average_Bin"]
+# Create the heatmap
+heatmap = alt.Chart(binned).mark_rect().encode(
+    x=alt.X("Satisfaction_Bin:O", title="User Satisfaction (binned by 20)"),
+    y=alt.Y("Average_Bin:O", title="Average Score (binned by 5)"),
+    color=alt.Color("Count:Q", scale=alt.Scale(scheme="blues"), title="Model Count"),
+    tooltip=["Satisfaction_Bin", "Average_Bin", "Count"]
 ).properties(
     width=600,
     height=500,
-    title="Model Density by Satisfaction and Average Score (Binned)"
+    title="Model Density by Binned Satisfaction and Score"
 )
 
 st.altair_chart(heatmap, use_container_width=True)
+
