@@ -373,26 +373,32 @@ st.altair_chart(combined_chart, use_container_width=True)
 
 
 
-grouped = grouped.rename(columns={"Hub ❤️": "Hub_Score", "Average ⬆️": "Average_Score"})
+df.columns = df.columns.str.strip()
+df = df.rename(columns={"Average ⬆️": "Average"})
 
-# Manually bin the data
-grouped["Satisfaction_Bin"] = (grouped["Hub_Score"] // 10 * 10).astype(int)
-grouped["Average_Bin"] = (grouped["Average_Score"] // 2 * 2).astype(int)
+# Drop missing values and convert to numeric
+df = df.dropna(subset=["Hub ❤️", "Average"])
+df["Hub ❤️"] = pd.to_numeric(df["Hub ❤️"], errors="coerce")
+df["Average"] = pd.to_numeric(df["Average"], errors="coerce")
+df = df.dropna(subset=["Hub ❤️", "Average"])
 
-# Count number of models in each bin
-binned = grouped.groupby(["Satisfaction_Bin", "Average_Bin"]).size().reset_index(name="Count")
+# Bin satisfaction (20-pt) and score (5-pt)
+df["Satisfaction_Bin"] = (df["Hub ❤️"] // 20) * 20
+df["Average_Bin"] = (df["Average"] // 5) * 5
 
-# Create the heatmap
+# Count models in each bin
+binned = df.groupby(["Satisfaction_Bin", "Average_Bin"]).size().reset_index(name="Model Count")
+
+# Create heatmap
 heatmap = alt.Chart(binned).mark_rect().encode(
-    x=alt.X("Satisfaction_Bin:O", title="User Satisfaction (binned by 10)"),
-    y=alt.Y("Average_Bin:O", title="Average Score (binned by 2)"),
-    color=alt.Color("Count:Q", scale=alt.Scale(scheme="blues"), title="Model Count"),
-    tooltip=["Satisfaction_Bin", "Average_Bin", "Count"]
+    x=alt.X("Satisfaction_Bin:O", title="User Satisfaction Bin (20 pts)"),
+    y=alt.Y("Average_Bin:O", title="Average Score Bin (5 pts)"),
+    color=alt.Color("Model Count:Q", scale=alt.Scale(scheme="blues"), title="Model Count"),
+    tooltip=["Satisfaction_Bin", "Average_Bin", "Model Count"]
 ).properties(
     width=600,
     height=500,
     title="Model Density by Binned Satisfaction and Score"
 )
 
-st.altair_chart(heatmap, use_container_width=True)
-
+heatmap.show() 
