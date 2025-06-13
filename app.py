@@ -151,32 +151,57 @@ st.altair_chart(final_chart, use_container_width=True)
 
 
 
+grouped["Exaggerated Size"] = grouped["CO₂ cost (kg)"]**2  # you can adjust exponent
 
-
-
-
-# Melt the grouped DataFrame for easier plotting
-melted = grouped.melt(
-    id_vars=["Type", "Model Count"],
-    value_vars=["Average ⬆️", "CO₂ cost (kg)", "Hub ❤️"],
-    var_name="Metric",
-    value_name="Value"
-)
-
-# Bubble matrix
-bubble_matrix = alt.Chart(melted).mark_circle().encode(
-    x=alt.X("Type:N", title="Model Type"),
-    y=alt.Y("Metric:N", title="Metric"),
-    size=alt.Size("Model Count:Q", scale=alt.Scale(range=[100, 800]), legend=alt.Legend(title="Model Count")),
-    color=alt.Color("Value:Q", scale=alt.Scale(scheme="blues"), legend=alt.Legend(title="Metric Value")),
-    tooltip=["Type", "Metric", "Value", "Model Count"]
+carbon_bubbles = alt.Chart(grouped).mark_circle(opacity=0.8).encode(
+    x=alt.X('random():Q', axis=None, scale=alt.Scale(zero=False)),  # scatter layout
+    y=alt.Y('random():Q', axis=None, scale=alt.Scale(zero=False)),
+    size=alt.Size('Exaggerated Size:Q', legend=None, scale=alt.Scale(range=[100, 8000])),
+    color=alt.Color('Type:N', legend=alt.Legend(title='Model Type')),
+    tooltip=["Type", "CO₂ cost (kg):Q", "Average ⬆️:Q"]
 ).properties(
-    title="Model Performance Bubble Matrix",
+    title="Visual Carbon Cost of AI Models (Exaggerated Circle Area)",
     width=600,
-    height=300
+    height=400
+).transform_calculate(
+    random='random()'  # for random layout
+).properties(
+    title=" CO2 Output"
 )
 
-st.altair_chart(bubble_matrix, use_container_width=True)
+
+st.altair_chart(carbon_bubbles, use_container_width=True)
+
+
+
+grouped['Date'] = pd.to_datetime(grouped['Date'])  # make sure your data has a valid date
+grouped['Month'] = grouped['Date'].dt.to_period('M').dt.to_timestamp()
+
+# Group + cumulative CO₂ per type
+monthly = (
+    grouped.sort_values("Month")
+    .groupby(["Type", "Month"])["CO₂ cost (kg)"]
+    .sum()
+    .groupby(level=0).cumsum()
+    .reset_index(name="Cumulative CO₂")
+)
+
+# Line chart
+carbon_line = alt.Chart(monthly).mark_line(point=True).encode(
+    x=alt.X("Month:T", title="Time"),
+    y=alt.Y("Cumulative CO₂:Q", title="Cumulative CO₂ Emissions (kg)"),
+    color=alt.Color("Type:N", title="Model Type"),
+    tooltip=["Type", "Month:T", "Cumulative CO₂:Q"]
+).properties(
+    title="Cumulative CO₂ Emissions Over Time by Model Type",
+    width=700,
+    height=400
+)
+
+st.altair_chart(carbon_line, use_container_width=True)
+
+
+
 
 
 
