@@ -144,7 +144,22 @@ for row_types in chunks(types, 3):
 
 
 
+score_cols = ['IFEval', 'BBH', 'MATH Lvl 5', 'GPQA', 'MuSR', 'MMLU-Pro']
 
+# Get best model type for each metric
+best_types = []
+for metric in score_cols:
+    best_row = grouped.loc[grouped[metric].idxmax()]
+    best_types.append({
+        "Metric": metric,
+        "Best Model Type": best_row["Type"],
+        "Average Score": round(best_row[metric], 2)
+    })
+
+# Create and display table
+best_df = pd.DataFrame(best_types)
+st.markdown("### 🏆 Best LLM Type per Evaluation Metric")
+st.table(best_df)
 
 
 
@@ -176,6 +191,75 @@ pie = alt.Chart(type_counts).mark_arc(innerRadius=50, outerRadius=150).encode(
 )
 
 pie
+
+
+
+
+
+df['Upload To Hub Date'] = pd.to_datetime(df['Upload To Hub Date'], errors='coerce')
+df = df.dropna(subset=['Upload To Hub Date', 'Type'])
+
+# Extract month
+df['Month'] = df['Upload To Hub Date'].dt.to_period('M').dt.to_timestamp()
+
+# Count models per month per type
+monthly_counts = (
+    df.groupby(['Month', 'Type'])
+    .size()
+    .reset_index(name='Model Count')
+)
+
+# Compute cumulative count per type
+monthly_counts['Cumulative Models'] = (
+    monthly_counts.sort_values('Month')
+    .groupby('Type')['Model Count']
+    .cumsum()
+)
+
+# Main line chart
+line_chart = alt.Chart(monthly_counts).mark_line().encode(
+    x=alt.X("Month:T", title="Month"),
+    y=alt.Y("Cumulative Models:Q", title="Total Number of Models"),
+    color=alt.Color("Type:N", title="Model Type"),
+    tooltip=["Month:T", "Type:N", "Cumulative Models:Q"]
+)
+
+# Vertical dashed annotation line for April 2025
+event_date = pd.to_datetime("2025-04-01")
+event_rule = alt.Chart(pd.DataFrame({"date": [event_date]})).mark_rule(
+    strokeDash=[4, 4],
+    color="red"
+).encode(
+    x="date:T"
+)
+
+# Text label for the event
+event_text = alt.Chart(pd.DataFrame({
+    "date": [event_date],
+    "label": ["Introduction of Llama 4 series, Gemini 2.5, OpenAI o4-mini model"]
+})).mark_text(
+    align="left",
+    baseline="top",
+    dx=5,
+    dy=-5,
+    fontSize=11,
+    fontStyle="italic",
+    color="red"
+).encode(
+    x="date:T",
+    y=alt.value(0),  # anchor at bottom
+    text="label:N"
+)
+
+# Combine everything
+final_chart = (line_chart + event_rule + event_text).properties(
+    title="Cumulative Number of LLM Models Released Over Time",
+    width=1000,
+    height=500
+)
+
+st.altair_chart(final_chart, use_container_width=True)
+
 
 
 
@@ -249,31 +333,46 @@ df = df.dropna(subset=['Upload To Hub Date', 'CO₂ cost (kg)', 'Type'])
 # Extract month
 df['Month'] = df['Upload To Hub Date'].dt.to_period('M').dt.to_timestamp()
 
-# Group + cumulative CO₂ per Type
+# Group by month and type
 monthly_emissions = (
     df.groupby(['Month', 'Type'])['CO₂ cost (kg)']
     .sum()
     .reset_index()
 )
 
+# Cumulative emissions
 monthly_emissions['Cumulative CO₂'] = (
     monthly_emissions.sort_values("Month")
     .groupby('Type')["CO₂ cost (kg)"]
     .cumsum()
 )
 
+# Main stacked area chart
 stacked_area = alt.Chart(monthly_emissions).mark_area(interpolate='monotone').encode(
     x=alt.X("Month:T", title="Month"),
     y=alt.Y("Cumulative CO₂:Q", stack="zero", title="Cumulative CO₂ Emissions (kg)"),
     color=alt.Color("Type:N", title="Model Type"),
     tooltip=["Month:T", "Type:N", "Cumulative CO₂:Q"]
-).properties(
+)
+
+# Dashed vertical lines for each January
+year_lines = alt.Chart(pd.DataFrame({
+    "year": pd.to_datetime(["2023-01-01", "2024-01-01", "2025-01-01"])
+})).mark_rule(
+    strokeDash=[6, 4],
+    color="gray"
+).encode(
+    x="year:T"
+)
+
+# Combine and display
+final_chart = (stacked_area + year_lines).properties(
     title="Accumulating Carbon Emissions from AI Models Over Time (Stacked by Type)",
-    width=800,
+    width=1000,
     height=800
 )
 
-st.altair_chart(stacked_area, use_container_width=True)
+st.altair_chart(final_chart, use_container_width=True)
 
 
 
