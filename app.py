@@ -175,7 +175,7 @@ agg_df["x"], agg_df["y"] = polar_positions(len(agg_df), radius_step=0.4)
 bubbles = alt.Chart(agg_df).mark_circle(opacity=0.8).encode(
     x=alt.X("x:Q", axis=None),
     y=alt.Y("y:Q", axis=None),
-    size=alt.Size("Size:Q", scale=alt.Scale(range=[4000, 45000]), legend=None),
+    size=alt.Size("Size:Q", scale=alt.Scale(range=[3000, 35000]), legend=None),
     color=alt.Color("Type:N", legend=alt.Legend(title="Model Type")),
     tooltip=[
         alt.Tooltip("Type:N", title="Model Type"),
