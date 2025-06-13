@@ -14,8 +14,7 @@ df.columns = df.columns.str.strip()
 df['Submission Date'] = pd.to_datetime(df['Submission Date'], errors='coerce')
 df = df[df['Type'].notna()]
 
-# Streamlit config
-st.set_page_config(layout="wide")
+# Sidebar filters
 st.sidebar.header("Filters")
 
 # Date filter
@@ -43,44 +42,54 @@ min_score = st.sidebar.slider("Minimum Average Score",
                               float(df['Average ⬆️'].min()))
 df = df[df['Average ⬆️'] >= min_score]
 
-# Aggregate and reshape
-grouped = df.groupby("Type")[score_cols].mean().reset_index()
-long_df = grouped.melt(id_vars="Type", var_name="Metric", value_name="Score")
+# Aggregate
+grouped = df.groupby("Type").agg({
+    "IFEval": "mean",
+    "BBH": "mean",
+    "MATH Lvl 5": "mean",
+    "GPQA": "mean",
+    "MUSR": "mean",
+    "Average ⬆️": "mean",
+    "Hub ❤️": "mean",
+    "CO₂ cost (kg)": "mean",
+    "Model": "count"
+}).reset_index().rename(columns={"Model": "Model Count"})
 
-# Base chart
+st.title("💡 Open LLM Leaderboard — Streamlit Dashboard")
+
+# Transform data for faceted chart
+long_df = grouped.melt(id_vars=["Type"], value_vars=score_cols, var_name="Metric", value_name="Score")
+
+# Base chart without faceting
 base = alt.Chart(long_df).encode(
-    x=alt.X("Metric:N", title="Metric"),
+    x=alt.X("Metric:N", title="Evaluation Metric"),
     y=alt.Y("Score:Q", title="Average Score"),
-    color=alt.Color("Metric:N", legend=None)
+    color=alt.Color("Type:N", legend=None)
 )
 
-# Layer bars + text before faceting
-layered = alt.layer(
-    base.mark_bar(),
-    base.mark_text(
-        align="center",
-        baseline="bottom",
-        dy=-3,
-        fontSize=11,
-        fontWeight="bold"
-    ).encode(text=alt.Text("Score:Q", format=".2f"))
+# Bar layer
+bars = base.mark_bar()
+
+# Text label layer
+labels = base.mark_text(
+    align='center',
+    baseline='bottom',
+    dy=-3,
+    fontSize=11,
+    fontWeight="bold"
+).encode(
+    text=alt.Text("Score:Q", format=".2f")
 )
 
-# Then facet
-faceted_chart = layered.facet(
-    column=alt.Column("Type:N", title="Model Type", columns=3),
-    spacing=25
-).resolve_scale(
-    y="independent"
-).configure_view(
-    continuousWidth=200,
-    continuousHeight=300
+# Combine and apply facet
+score_chart = alt.layer(bars, labels).facet(
+    column=alt.Column("Type:N", title="Model Type")
 ).properties(
     title="Evaluation Metrics by Model Type"
 )
 
-# Display
-st.altair_chart(faceted_chart, use_container_width=True)
+# Show chart
+st.altair_chart(score_chart, use_container_width=True)
 
 
 
