@@ -113,28 +113,17 @@ for row_types in chunks(types, 3):
 
 #new 
 
-score_cols = ['IFEval', 'BBH', 'MATH Lvl 5', 'GPQA', 'MUSR', 'Average ⬆️']
-grouped = df.groupby("Type").agg({col: "mean" for col in score_cols}).reset_index()
+metric_selection = alt.selection_point(fields=["Metric"], clear="click")
 
-# Melt to long format
-long_df = grouped.melt(
-    id_vars=["Type"],
-    value_vars=score_cols,
-    var_name="Metric",
-    value_name="Score"
-)
-
-# --- Shared Selection on Metric ---
-metric_select = alt.selection_point(fields=["Metric"], clear="click")
-
-# Split types into rows of 3
+# Get unique model types
 types = long_df["Type"].unique().tolist()
 
+# Helper to chunk types
 def chunks(lst, n):
     for i in range(0, len(lst), n):
         yield lst[i:i + n]
 
-# --- Build Chart Grid with Shared Selection ---
+# Build chart for each type in chunks of 3 per row
 for row_types in chunks(types, 3):
     cols = st.columns(len(row_types))
     for i, t in enumerate(row_types):
@@ -144,24 +133,24 @@ for row_types in chunks(types, 3):
             x=alt.X("Metric:N", title="Evaluation Metric"),
             y=alt.Y("Score:Q", title="Avg Score"),
             color=alt.Color("Metric:N", legend=None),
-            opacity=alt.condition(metric_select, alt.value(1.0), alt.value(0.2))
+            opacity=alt.condition(metric_selection, alt.value(1.0), alt.value(0.2))
         )
 
-        bar = base.mark_bar()
-        text = base.mark_text(
+        bars = base.mark_bar()
+        labels = base.mark_text(
             align="center",
             baseline="bottom",
             dy=-3,
             fontSize=11
         ).encode(text=alt.Text("Score:Q", format=".2f"))
 
-        composed = alt.layer(bar, text).add_params(metric_select).properties(
+        chart = alt.layer(bars, labels).add_params(metric_selection).properties(
             title=t,
             width=400,
             height=600
         )
 
-        cols[i].altair_chart(composed, use_container_width=True)
+        cols[i].altair_chart(chart, use_container_width=True)
 
 
 
