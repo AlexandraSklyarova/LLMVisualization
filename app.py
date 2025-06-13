@@ -176,54 +176,47 @@ st.altair_chart(stacked_area, use_container_width=True)
 
 
 
-
-
-
-# Clean column names and ensure numeric types
 df.columns = df.columns.str.strip()
 df = df.rename(columns={"Average ⬆️": "Average"})
 df = df.dropna(subset=["Hub ❤️", "Average", "Type"])
+
 df["Hub ❤️"] = pd.to_numeric(df["Hub ❤️"], errors="coerce")
 df["Average"] = pd.to_numeric(df["Average"], errors="coerce")
 df = df.dropna(subset=["Hub ❤️", "Average"])
 
-# Base scatter chart
+# --- BASE SCATTER ---
 base = alt.Chart(df).encode(
-    x=alt.X("Hub ❤️:Q", title="User Satisfaction (Hub ❤️)"),
+    x=alt.X("Hub ❤️:Q", title="User Satisfaction"),
     y=alt.Y("Average:Q", title="Average Score"),
-    color=alt.Color("Type:N", title="Model Type"),
-    tooltip=["Type", "Hub ❤️:Q", "Average:Q"]
+    color=alt.Color("Type:N", legend=alt.Legend(title="Model Type")),
+    tooltip=["Type", "Hub ❤️", "Average"]
 )
 
-# Scatter points
-points = base.mark_circle(size=100)
+# --- POINTS ---
+points = base.mark_circle(size=90)
 
-# Regression line across all data
-trend = base.transform_regression(
-    "Hub ❤️", "Average", method="linear"
-).mark_line(color="black", strokeDash=[4,4])
+# --- REGRESSION LINE ---
+trend = base.transform_regression("Hub ❤️", "Average").mark_line(color="black", strokeDash=[4, 4])
 
-# Marginal histograms
+# --- MARGINAL HISTOGRAMS ---
 x_hist = alt.Chart(df).mark_bar(opacity=0.3).encode(
-    x=alt.X("Hub ❤️:Q", bin=alt.Bin(maxbins=30)),
-    y=alt.Y('count()', title=None)
-).properties(height=100)
+    x=alt.X("Hub ❤️:Q", bin=True, title="User Satisfaction"),
+    y=alt.Y("count():Q", title=None)
+).properties(height=80)
 
 y_hist = alt.Chart(df).mark_bar(opacity=0.3).encode(
-    x=alt.X('count()', title=None),
-    y=alt.Y("Average:Q", bin=alt.Bin(maxbins=30))
-).properties(width=100)
+    x=alt.X("count():Q", title=None),
+    y=alt.Y("Average:Q", bin=True, title="Average Score")
+).properties(width=80)
 
-# Layout composition
-chart = alt.vconcat(
-    x_hist,
-    alt.hconcat(points + trend, y_hist)
-).resolve_axis(
-    x='shared', y='shared'
-).properties(
-    title="Correlation between User Satisfaction and Average Score"
+# --- COMBINE ---
+scatter_with_trend = points + trend
+main_chart = alt.hconcat(scatter_with_trend, y_hist)
+full_chart = alt.vconcat(x_hist, main_chart).resolve_axis(x='shared', y='shared').properties(
+    title="Correlation Between User Satisfaction and Average Score"
 )
 
-st.altair_chart(chart, use_container_width=True)
+# --- SHOW ---
+st.altair_chart(full_chart, use_container_width=True)
 
 
