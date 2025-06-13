@@ -203,27 +203,31 @@ pie
 
 
 
+# --- Prepare data ---
 df['Upload To Hub Date'] = pd.to_datetime(df['Upload To Hub Date'], errors='coerce')
 df = df.dropna(subset=['Upload To Hub Date', 'Type'])
+
+# Extract month
 df['Month'] = df['Upload To Hub Date'].dt.to_period('M').dt.to_timestamp()
 
-# --- Monthly Model Count and Cumulative ---
+# Count models per month per type
 monthly_counts = (
     df.groupby(['Month', 'Type'])
     .size()
     .reset_index(name='Model Count')
 )
 
+# Compute cumulative count per type
 monthly_counts['Cumulative Models'] = (
     monthly_counts.sort_values('Month')
     .groupby('Type')['Model Count']
     .cumsum()
 )
 
-# --- Semantic Zoom Selection ---
-zoom = alt.selection_interval(bind="scales")
+# --- Semantic zoom (bind scales) ---
+zoom = alt.selection_interval(bind='scales')
 
-# --- Main Line Chart ---
+# --- Main line chart ---
 line_chart = alt.Chart(monthly_counts).mark_line().encode(
     x=alt.X("Month:T", title="Month", axis=alt.Axis(format="%b %Y")),
     y=alt.Y("Cumulative Models:Q", title="Total Number of Models"),
@@ -235,20 +239,21 @@ line_chart = alt.Chart(monthly_counts).mark_line().encode(
     ]
 ).add_params(zoom)
 
-# --- Event Line (April 2024) ---
+# --- Annotation line for April 2024 ---
 event_date = pd.to_datetime("2024-04-01")
-event_rule = alt.Chart(pd.DataFrame({"date": [event_date]})).mark_rule(
+event_df = pd.DataFrame({
+    "date": [event_date],
+    "label": ["Publication of Visualization-of-Thought (VoT)"]
+})
+
+event_rule = alt.Chart(event_df).mark_rule(
     strokeDash=[4, 4],
     color="red"
 ).encode(
-    x=alt.X("date:T")
+    x="date:T"
 )
 
-# --- Event Label ---
-event_text = alt.Chart(pd.DataFrame({
-    "date": [event_date],
-    "label": ["Publication of Visualization-of-Thought (VoT)"]
-})).mark_text(
+event_text = alt.Chart(event_df).mark_text(
     align="left",
     baseline="top",
     dx=5,
@@ -262,8 +267,8 @@ event_text = alt.Chart(pd.DataFrame({
     text="label:N"
 )
 
-# --- Combine and Display ---
-final_chart = (line_chart + event_rule + event_text).properties(
+# --- Combine everything ---
+final_chart = alt.layer(line_chart, event_rule, event_text).properties(
     title="Cumulative Number of LLM Models Released Over Time (Zoom Enabled)",
     width=1100,
     height=500
