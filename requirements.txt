@@ -3,3 +3,5 @@ altair
 vega_datasets
 pandas
 plotly
+streamlit-plotly-events
+
