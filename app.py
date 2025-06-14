@@ -396,7 +396,7 @@ df = df.dropna(subset=["CO₂ cost (kg)", "Upload To Hub Date", "Type"])
 grouped = df.groupby("Type", as_index=False)["CO₂ cost (kg)"].mean()
 
 angle_step = 2 * np.pi / len(grouped)
-radius = 1200  # adjust for spacing
+radius = 1000  # adjust for spacing
 
 layout_df = grouped.copy()
 layout_df["angle"] = [i * angle_step for i in range(len(grouped))]
