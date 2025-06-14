@@ -390,62 +390,70 @@ df = df.rename(columns={"Average ⬆️": "Average"})
 df["CO₂ cost (kg)"] = pd.to_numeric(df["CO₂ cost (kg)"], errors="coerce")
 df["Upload To Hub Date"] = pd.to_datetime(df["Upload To Hub Date"], errors="coerce")
 df = df.dropna(subset=["CO₂ cost (kg)", "Upload To Hub Date", "Type"])
-df["Month"] = df["Upload To Hub Date"].dt.to_period("M").dt.to_timestamp()
 
-# --- Treemap data ---
-agg_df = df.groupby("Type", as_index=False)["CO₂ cost (kg)"].mean()
+# Aggregate
+grouped = df.groupby("Type", as_index=False)["CO₂ cost (kg)"].mean()
+grouped["value"] = grouped["CO₂ cost (kg)"]
 
-# --- Use Plotly qualitative color palette ---
-color_palette = px.colors.qualitative.Plotly
-types_sorted = agg_df.sort_values("CO₂ cost (kg)", ascending=False)["Type"].tolist()
-type_color_map = {t: color_palette[i % len(color_palette)] for i, t in enumerate(types_sorted)}
-
-# --- Plotly Treemap ---
-fig = px.treemap(
-    agg_df,
-    path=["Type"],
-    values="CO₂ cost (kg)",
-    color="Type",
-    color_discrete_map=type_color_map,
-    hover_data={"CO₂ cost (kg)": True}
+# Circlify layout
+circles = circlify.circlify(
+    grouped["value"].tolist(),
+    show_enclosure=False,
+    target_enclosure=circlify.Circle(x=0, y=0, r=1)
 )
-fig.update_traces(root_color="lightgrey")
-fig.update_layout(margin=dict(t=40, l=0, r=0, b=0), title="Click a Box to Filter the Area Chart")
 
-# --- Display treemap and capture click ---
-st.subheader("📦 Treemap: Avg CO₂ Emissions by Model Type")
-clicked = plotly_events(fig, click_event=True, hover_event=False)
-selected_type = clicked[0]["label"] if clicked else None
+# Layout DataFrame
+layout_df = pd.DataFrame([{
+    "x": c.x,
+    "y": c.y,
+    "r": c.r,
+    "Type": grouped.iloc[i]["Type"],
+    "CO₂ cost (kg)": grouped.iloc[i]["CO₂ cost (kg)"]
+} for i, c in enumerate(circles)])
 
-# --- Area Chart Data ---
+layout_df["Size"] = layout_df["r"] * 3000
+layout_df["CO₂ Rounded"] = layout_df["CO₂ cost (kg)"].round(1)
+
+# Selection
+type_selection = alt.selection_point(fields=["Type"], bind="legend")
+
+# Bubble Chart
+bubble_chart = alt.Chart(layout_df).mark_circle(opacity=0.9).encode(
+    x=alt.X("x:Q", axis=None),
+    y=alt.Y("y:Q", axis=None),
+    size=alt.Size("Size:Q", legend=None),
+    color=alt.Color("Type:N", legend=alt.Legend(title="Model Type")),
+    opacity=alt.condition(type_selection, alt.value(1.0), alt.value(0.2)),
+    tooltip=["Type", "CO₂ cost (kg):Q"]
+).add_params(type_selection).properties(
+    title="Packed Bubble Chart of Average CO₂ Emissions",
+    width=600,
+    height=600
+)
+
+# Area Chart
+df["Month"] = df["Upload To Hub Date"].dt.to_period("M").dt.to_timestamp()
 monthly = df.groupby(["Month", "Type"])["CO₂ cost (kg)"].sum().reset_index()
 monthly["Cumulative CO₂"] = monthly.sort_values("Month").groupby("Type")["CO₂ cost (kg)"].cumsum()
 
-# --- Filter by treemap click ---
-if selected_type:
-    filtered_df = monthly[monthly["Type"] == selected_type]
-    legend = None
-else:
-    filtered_df = monthly
-    legend = alt.Legend(title="Model Type")
-
-# --- Altair Area Chart (Stacked by Type) ---
-area_chart = alt.Chart(filtered_df).mark_area(interpolate="monotone").encode(
-    x=alt.X("Month:T", title="Month"),
-    y=alt.Y("Cumulative CO₂:Q", title="Cumulative CO₂ Emissions (kg)", stack="zero"),
-    color=alt.Color("Type:N", legend=legend, scale=alt.Scale(domain=types_sorted, range=color_palette)),
-    tooltip=[
-        alt.Tooltip("Month:T", format="%B %Y"),
-        alt.Tooltip("Type:N"),
-        alt.Tooltip("Cumulative CO₂:Q", format=",.0f", title="Cumulative CO₂ (kg)")
-    ]
-).properties(
-    width=800,
-    height=500,
-    title=f"Cumulative CO₂ Emissions Over Time{f' — {selected_type}' if selected_type else ''}"
+area_chart = alt.Chart(monthly).mark_area(interpolate="monotone").encode(
+    x="Month:T",
+    y=alt.Y("Cumulative CO₂:Q", stack="zero", title="Cumulative CO₂ Emissions"),
+    color=alt.Color("Type:N", legend=None),
+    opacity=alt.condition(type_selection, alt.value(1.0), alt.value(0.2)),
+    tooltip=["Month:T", "Type:N", "Cumulative CO₂:Q"]
+).add_params(type_selection).properties(
+    title="Cumulative CO₂ Emissions Over Time",
+    width=500,
+    height=500
 )
 
-st.altair_chart(area_chart, use_container_width=True)
+# Layout in columns
+col1, col2 = st.columns([2, 1])
+with col1:
+    st.altair_chart(bubble_chart, use_container_width=True)
+with col2:
+    st.altair_chart(area_chart, use_container_width=True)
 
 
 
