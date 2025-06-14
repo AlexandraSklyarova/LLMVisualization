@@ -366,14 +366,14 @@ area_chart = alt.Chart(monthly).mark_area(interpolate="monotone").encode(
 )
 
 # --- Combine charts ---
-combined_chart = alt.vconcat(
-    bubble_chart,
-    area_chart
-).resolve_legend(
-    color="shared"
-)
+col1, col2 = st.columns([2, 1.2])  # Adjust column width ratios as needed
 
-st.altair_chart(combined_chart, use_container_width=True)
+with col1:
+    st.altair_chart(bubble_chart, use_container_width=True)
+
+with col2:
+    st.altair_chart(area_chart, use_container_width=True)
+
 
 
 
