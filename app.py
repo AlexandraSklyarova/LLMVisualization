@@ -394,11 +394,8 @@ df = df.dropna(subset=["CO₂ cost (kg)", "Upload To Hub Date", "Type"])
 
 # --- Prepare Data ---
 grouped = df.groupby("Type", as_index=False)["CO₂ cost (kg)"].mean()
+grouped["value"] = grouped["CO₂ cost (kg)"]  # ✅ no transformation here!
 
-# Optional: boost contrast in sizes by applying a slight power scaling
-grouped["value"] = grouped["CO₂ cost (kg)"] ** 1.5
-
-# --- Compute packed layout with circlify ---
 # --- Circlify layout ---
 circles = circlify.circlify(
     grouped["value"].tolist(),
@@ -406,19 +403,15 @@ circles = circlify.circlify(
     target_enclosure=circlify.Circle(x=0, y=0, r=1)
 )
 
-# --- Two scales: layout vs visual size ---
-layout_scale = 1     # distance between centers (tight cluster)
-radius_boost = 1      # boost radius size without spacing them out too much
-
 layout_df = pd.DataFrame([{
-    "x": c.x * layout_scale,
-    "y": c.y * layout_scale,
-    "r": c.r * radius_boost,
+    "x": c.x * c.r * 2 * 1000,     # ✅ pack based on actual r
+    "y": c.y * c.r * 2 * 1000,
+    "r": c.r * 1000,
     "Type": grouped.iloc[i]["Type"],
-    "CO₂ cost (kg)": grouped.iloc[i]["CO₂ cost (kg)"]
+    "CO₂ cost (kg)": grouped.iloc[i]["CO₂ cost (kg)"]  # ✅ matches exactly
 } for i, c in enumerate(circles)])
 
-layout_df["Size"] = (layout_df["r"] ** 2) * np.pi
+layout_df["Size"] = layout_df["r"] ** 2 * np.pi
 layout_df["CO₂ Rounded"] = layout_df["CO₂ cost (kg)"].round(1)
 
 
