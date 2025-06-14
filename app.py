@@ -392,17 +392,15 @@ df["Upload To Hub Date"] = pd.to_datetime(df["Upload To Hub Date"], errors="coer
 df = df.dropna(subset=["CO₂ cost (kg)", "Upload To Hub Date", "Type"])
 df["Month"] = df["Upload To Hub Date"].dt.to_period("M").dt.to_timestamp()
 
-# --- Group for treemap ---
+# --- Treemap data ---
 agg_df = df.groupby("Type", as_index=False)["CO₂ cost (kg)"].mean()
 
-# --- Define consistent color scale ---
-color_scale = alt.Scale(scheme="tableau20")
+# --- Use Plotly qualitative color palette ---
+color_palette = px.colors.qualitative.Plotly
 types_sorted = agg_df.sort_values("CO₂ cost (kg)", ascending=False)["Type"].tolist()
+type_color_map = {t: color_palette[i % len(color_palette)] for i, t in enumerate(types_sorted)}
 
-# --- Plotly Treemap with consistent color logic ---
-color_map = px.colors.qualitative.tableau
-type_color_map = {t: color_map[i % len(color_map)] for i, t in enumerate(types_sorted)}
-
+# --- Plotly Treemap ---
 fig = px.treemap(
     agg_df,
     path=["Type"],
@@ -414,37 +412,37 @@ fig = px.treemap(
 fig.update_traces(root_color="lightgrey")
 fig.update_layout(margin=dict(t=40, l=0, r=0, b=0), title="Click a Box to Filter the Area Chart")
 
-# --- Display and capture click ---
+# --- Display treemap and capture click ---
 st.subheader("📦 Treemap: Avg CO₂ Emissions by Model Type")
-selected_points = plotly_events(fig, click_event=True, hover_event=False)
-selected_type = selected_points[0]["label"] if selected_points else None
+clicked = plotly_events(fig, click_event=True, hover_event=False)
+selected_type = clicked[0]["label"] if clicked else None
 
-# --- Area chart data ---
+# --- Area Chart Data ---
 monthly = df.groupby(["Month", "Type"])["CO₂ cost (kg)"].sum().reset_index()
 monthly["Cumulative CO₂"] = monthly.sort_values("Month").groupby("Type")["CO₂ cost (kg)"].cumsum()
 
-# --- Filter if treemap click happened ---
+# --- Filter by treemap click ---
 if selected_type:
-    filtered = monthly[monthly["Type"] == selected_type]
+    filtered_df = monthly[monthly["Type"] == selected_type]
     legend = None
 else:
-    filtered = monthly
+    filtered_df = monthly
     legend = alt.Legend(title="Model Type")
 
-# --- Altair Area Chart ---
-area_chart = alt.Chart(filtered).mark_area(interpolate="monotone").encode(
+# --- Altair Area Chart (Stacked by Type) ---
+area_chart = alt.Chart(filtered_df).mark_area(interpolate="monotone").encode(
     x=alt.X("Month:T", title="Month"),
     y=alt.Y("Cumulative CO₂:Q", title="Cumulative CO₂ Emissions (kg)", stack="zero"),
-    color=alt.Color("Type:N", scale=color_scale, sort=types_sorted, legend=legend),
+    color=alt.Color("Type:N", legend=legend, scale=alt.Scale(domain=types_sorted, range=color_palette)),
     tooltip=[
-        alt.Tooltip("Month:T", format="%b %Y"),
+        alt.Tooltip("Month:T", format="%B %Y"),
         alt.Tooltip("Type:N"),
         alt.Tooltip("Cumulative CO₂:Q", format=",.0f", title="Cumulative CO₂ (kg)")
     ]
 ).properties(
     width=800,
     height=500,
-    title=f"Cumulative CO₂ Emissions Over Time{f' for {selected_type}' if selected_type else ''}"
+    title=f"Cumulative CO₂ Emissions Over Time{f' — {selected_type}' if selected_type else ''}"
 )
 
 st.altair_chart(area_chart, use_container_width=True)
