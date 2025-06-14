@@ -392,44 +392,44 @@ df["CO₂ cost (kg)"] = pd.to_numeric(df["CO₂ cost (kg)"], errors="coerce")
 df["Upload To Hub Date"] = pd.to_datetime(df["Upload To Hub Date"], errors="coerce")
 df = df.dropna(subset=["CO₂ cost (kg)", "Upload To Hub Date", "Type"])
 
-# --- Prepare Data ---
+# --- Use CO₂ as radius directly ---
 grouped = df.groupby("Type", as_index=False)["CO₂ cost (kg)"].mean()
-grouped["value"] = grouped["CO₂ cost (kg)"]  # ✅ no transformation here!
 
-# --- Circlify layout ---
+# Circlify layout using CO₂ directly
 circles = circlify.circlify(
-    grouped["value"].tolist(),
+    grouped["CO₂ cost (kg)"].tolist(),
     show_enclosure=False,
     target_enclosure=circlify.Circle(x=0, y=0, r=1)
 )
 
+# Position and size bubbles
 layout_df = pd.DataFrame([{
-    "x": c.x * c.r * 2 * 1000,     # ✅ pack based on actual r
-    "y": c.y * c.r * 2 * 1000,
-    "r": c.r * 1000,
+    "x": c.x * 1000,  # scaled for display
+    "y": c.y * 1000,
+    "r": grouped.iloc[i]["CO₂ cost (kg)"],  # radius = CO₂
     "Type": grouped.iloc[i]["Type"],
-    "CO₂ cost (kg)": grouped.iloc[i]["CO₂ cost (kg)"]  # ✅ matches exactly
+    "CO₂ cost (kg)": grouped.iloc[i]["CO₂ cost (kg)"]
 } for i, c in enumerate(circles)])
 
+# Size = π × r², to match Altair's area encoding
 layout_df["Size"] = layout_df["r"] ** 2 * np.pi
 layout_df["CO₂ Rounded"] = layout_df["CO₂ cost (kg)"].round(1)
 
-
-# --- Selection ---
+# Shared selection
 type_selection = alt.selection_point(fields=["Type"], bind="legend")
 
-# --- Bubble Chart ---
+# --- Bubble chart ---
 bubbles = alt.Chart(layout_df).mark_circle(opacity=0.85).encode(
     x=alt.X("x:Q", axis=None),
     y=alt.Y("y:Q", axis=None),
-    size=alt.Size("Size:Q", scale=alt.Scale(range=[750, 35000]), legend=None),  # 👈 THIS is key
+    size=alt.Size("Size:Q", scale=alt.Scale(range=[10000, 400000]), legend=None),
     color=alt.Color("Type:N", legend=alt.Legend(title="Model Type")),
     opacity=alt.condition(type_selection, alt.value(1.0), alt.value(0.2)),
     tooltip=["Type:N", "CO₂ cost (kg):Q"]
 ).add_params(type_selection).properties(
-    title="Packed Bubble Chart: Avg CO₂ Emissions by Model Type",
-    width=1000,
-    height=800
+    title="Packed Bubble Chart: Radius = CO₂ Cost (kg)",
+    width=800,
+    height=650
 )
 
 labels = alt.Chart(layout_df).mark_text(
@@ -440,22 +440,27 @@ labels = alt.Chart(layout_df).mark_text(
     x="x:Q",
     y="y:Q",
     text="CO₂ Rounded:Q",
-    opacity=alt.condition(type_selection, alt.value(1.0), alt.value(0.2))
+    opacity=alt.condition(type_selection, alt.value(1.0), alt.value(0.3))
 )
 
 bubble_chart = bubbles + labels
 
-# --- Area Chart Data ---
+# --- Area chart data ---
 df["Month"] = df["Upload To Hub Date"].dt.to_period("M").dt.to_timestamp()
 monthly = df.groupby(["Month", "Type"])["CO₂ cost (kg)"].sum().reset_index()
 monthly["Cumulative CO₂"] = monthly.sort_values("Month").groupby("Type")["CO₂ cost (kg)"].cumsum()
 
+# --- Area chart ---
 area_chart = alt.Chart(monthly).mark_area(interpolate="monotone").encode(
     x=alt.X("Month:T", title="Month"),
     y=alt.Y("Cumulative CO₂:Q", title="Cumulative CO₂ Emissions (kg)", stack="zero"),
     color=alt.Color("Type:N", legend=None),
-    opacity=alt.condition(type_selection, alt.value(1.0), alt.value(0.15)),
-    tooltip=["Month:T", "Type:N", "Cumulative CO₂:Q"]
+    opacity=alt.condition(type_selection, alt.value(1.0), alt.value(0.1)),
+    tooltip=[
+        alt.Tooltip("Month:T", format="%B %Y"),
+        alt.Tooltip("Type:N"),
+        alt.Tooltip("Cumulative CO₂:Q", format=",.0f")
+    ]
 ).add_params(type_selection).properties(
     title="Cumulative CO₂ Emissions Over Time",
     width=800,
@@ -463,13 +468,13 @@ area_chart = alt.Chart(monthly).mark_area(interpolate="monotone").encode(
 )
 
 # --- Combine vertically ---
-combined = alt.vconcat(
+combined_chart = alt.vconcat(
     bubble_chart,
     area_chart
 ).resolve_legend(color="shared")
 
-st.altair_chart(combined, use_container_width=True)
-
+# --- Show in Streamlit ---
+st.altair_chart(combined_chart, use_container_width=True)
 
 
 
