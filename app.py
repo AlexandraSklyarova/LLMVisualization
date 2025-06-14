@@ -404,8 +404,8 @@ circles = circlify.circlify(
 
 # Position and size bubbles
 layout_df = pd.DataFrame([{
-    "x": c.x * grouped.iloc[i]["CO₂ cost (kg)"] * 1.5 * 75,  # x scaled to radius
-    "y": c.y * grouped.iloc[i]["CO₂ cost (kg)"] * 1.5 * 75,  # y scaled to radius
+    "x": c.x * grouped.iloc[i]["CO₂ cost (kg)"] * 1.5 * 50,  # x scaled to radius
+    "y": c.y * grouped.iloc[i]["CO₂ cost (kg)"] * 1.5 * 50,  # y scaled to radius
     "r": grouped.iloc[i]["CO₂ cost (kg)"],
     "Type": grouped.iloc[i]["Type"],
     "CO₂ cost (kg)": grouped.iloc[i]["CO₂ cost (kg)"]
@@ -423,7 +423,7 @@ type_selection = alt.selection_point(fields=["Type"], bind="legend")
 bubbles = alt.Chart(layout_df).mark_circle(opacity=0.85).encode(
     x=alt.X("x:Q", axis=None),
     y=alt.Y("y:Q", axis=None),
-    size=alt.Size("Size:Q", scale=alt.Scale(range=[750, 35000]), legend=None),
+    size=alt.Size("Size:Q", scale=alt.Scale(range=[750, 30000]), legend=None),
     color=alt.Color("Type:N", legend=alt.Legend(title="Model Type")),
     opacity=alt.condition(type_selection, alt.value(1.0), alt.value(0.2)),
     tooltip=["Type:N", "CO₂ cost (kg):Q"]
