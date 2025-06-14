@@ -2,6 +2,7 @@ import pandas as pd
 import numpy as np
 import altair as alt
 import streamlit as st
+import plotly.express as px
 
 
 
@@ -386,90 +387,75 @@ st.altair_chart(combined_chart, use_container_width=True)
 
 df.columns = df.columns.str.strip()
 df = df.rename(columns={"Average ⬆️": "Average"})
+
 df["CO₂ cost (kg)"] = pd.to_numeric(df["CO₂ cost (kg)"], errors="coerce")
 df["Upload To Hub Date"] = pd.to_datetime(df["Upload To Hub Date"], errors="coerce")
-df = df.dropna(subset=["CO₂ cost (kg)", "Type", "Upload To Hub Date"])
+df = df.dropna(subset=["CO₂ cost (kg)", "Upload To Hub Date", "Type"])
 df["Month"] = df["Upload To Hub Date"].dt.to_period("M").dt.to_timestamp()
 
-# --- Spiral Layout Generator ---
-def polar_positions(n, radius_step=0.4):
-    angles, radii = [], []
-    for i in range(n):
-        r = radius_step * np.sqrt(i)
-        theta = i * 137.5  # golden angle in degrees
-        angles.append(np.deg2rad(theta))
-        radii.append(r)
-    x = [r * np.cos(a) for r, a in zip(radii, angles)]
-    y = [r * np.sin(a) for r, a in zip(radii, angles)]
-    return x, y
+# --- Sidebar filters (optional) ---
+st.sidebar.header("Filters")
+type_options = df["Type"].unique().tolist()
+default_selection = type_options if len(type_options) < 10 else type_options[:5]
+selected_types = st.sidebar.multiselect("Filter by Model Type:", type_options, default=default_selection)
+df = df[df["Type"].isin(selected_types)]
 
-# --- Shared Selection ---
-type_selection = alt.selection_point(fields=["Type"], bind="legend")
+# --- Group for treemap ---
+agg_df = df.groupby("Type", as_index=False)["CO₂ cost (kg)"].mean()
+agg_df["CO₂ Rounded"] = agg_df["CO₂ cost (kg)"].round(1)
 
-# --- Bubble Data ---
-bubble_data = df.groupby("Type", as_index=False)["CO₂ cost (kg)"].mean()
-bubble_data["CO₂ Rounded"] = bubble_data["CO₂ cost (kg)"].round().astype(int)
-bubble_data["Size"] = bubble_data["CO₂ cost (kg)"] ** 4
-bubble_data = bubble_data.sort_values("Type").reset_index(drop=True)
-bubble_data["x"], bubble_data["y"] = polar_positions(len(bubble_data))
+# --- Display selected type in session state ---
+if "selected_treemap_type" not in st.session_state:
+    st.session_state.selected_treemap_type = None
 
-# --- Bubble Chart ---
-bubbles = alt.Chart(bubble_data).mark_circle(opacity=0.9).encode(
-    x=alt.X("x:Q", axis=None),
-    y=alt.Y("y:Q", axis=None),
-    size=alt.Size("Size:Q", scale=alt.Scale(range=[4500, 45000]), legend=None),
-    color=alt.Color("Type:N", legend=alt.Legend(title="Model Type")),
-    opacity=alt.condition(type_selection, alt.value(1.0), alt.value(0.2)),
-    tooltip=[
-        alt.Tooltip("Type:N", title="Model Type"),
-        alt.Tooltip("CO₂ cost (kg):Q", title="Avg CO₂ (kg)", format=",.1f")
-    ]
-).add_params(type_selection).properties(
-    title="Average CO₂ Emissions by Model Type",
-    width=600,
-    height=600
+# --- Treemap ---
+st.subheader("📦 Treemap: Avg CO₂ Emissions by Model Type")
+fig = px.treemap(
+    agg_df,
+    path=["Type"],
+    values="CO₂ cost (kg)",
+    color="CO₂ cost (kg)",
+    color_continuous_scale="YlOrRd",
+    title="Click a Rectangle to Filter the Time Series Below",
+    hover_data={"CO₂ cost (kg)": True}
 )
+fig.update_traces(root_color="lightgrey")
+treemap_click = st.plotly_chart(fig, use_container_width=True)
 
-labels = alt.Chart(bubble_data).mark_text(
-    fontSize=11,
-    fontWeight="bold",
-    color="black"
-).encode(
-    x="x:Q",
-    y="y:Q",
-    text="CO₂ Rounded:Q",
-    opacity=alt.condition(type_selection, alt.value(1.0), alt.value(0.2))
-)
-
-bubble_chart = bubbles + labels
-
-# --- Area Chart Data ---
+# --- Area chart data ---
 monthly = df.groupby(["Month", "Type"])["CO₂ cost (kg)"].sum().reset_index()
 monthly["Cumulative CO₂"] = monthly.sort_values("Month").groupby("Type")["CO₂ cost (kg)"].cumsum()
 
-# --- Area Chart ---
-area_chart = alt.Chart(monthly).mark_area(interpolate="monotone").encode(
-    x=alt.X("Month:T", title="Month", axis=alt.Axis(format="%b %Y")),
+# --- Linked interactivity using Streamlit dropdown (simulates treemap click) ---
+selected_type_for_chart = st.selectbox(
+    "Filter Time Series by Type (simulates treemap click):",
+    ["All"] + sorted(agg_df["Type"].tolist())
+)
+
+if selected_type_for_chart != "All":
+    filtered = monthly[monthly["Type"] == selected_type_for_chart]
+    color_legend = None
+else:
+    filtered = monthly
+    color_legend = alt.Legend(title="Model Type")
+
+# --- Area chart ---
+area_chart = alt.Chart(filtered).mark_area(interpolate="monotone").encode(
+    x=alt.X("Month:T", title="Month"),
     y=alt.Y("Cumulative CO₂:Q", title="Cumulative CO₂ Emissions (kg)", stack="zero"),
-    color=alt.Color("Type:N", legend=None),
-    opacity=alt.condition(type_selection, alt.value(1.0), alt.value(0.2)),
+    color=alt.Color("Type:N", legend=color_legend),
     tooltip=[
         alt.Tooltip("Month:T", title="Month", format="%B %Y"),
         alt.Tooltip("Type:N", title="Model Type"),
-        alt.Tooltip("Cumulative CO₂:Q", format=",.0f", title="Cumulative CO₂ (kg)")
+        alt.Tooltip("Cumulative CO₂:Q", title="Cumulative CO₂ (kg)", format=",.0f")
     ]
-).add_params(type_selection).properties(
-    title="Cumulative Carbon Emissions Over Time (Stacked by Type)",
-    width=400,
-    height=500
+).properties(
+    width=800,
+    height=500,
+    title="Cumulative CO₂ Emissions Over Time (Filtered by Model Type)"
 )
 
-# --- Layout Side-by-Side ---
-col1, col2 = st.columns([2, 1])
-with col1:
-    st.altair_chart(bubble_chart, use_container_width=True)
-with col2:
-    st.altair_chart(area_chart, use_container_width=True)
+st.altair_chart(area_chart, use_container_width=True)
 
 
 
