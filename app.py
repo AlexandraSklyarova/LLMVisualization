@@ -407,8 +407,8 @@ circles = circlify.circlify(
 )
 
 # --- Two scales: layout vs visual size ---
-layout_scale = 300     # distance between centers (tight cluster)
-radius_boost = 2      # boost radius size without spacing them out too much
+layout_scale = 400     # distance between centers (tight cluster)
+radius_boost = 1      # boost radius size without spacing them out too much
 
 layout_df = pd.DataFrame([{
     "x": c.x * layout_scale,
@@ -435,8 +435,8 @@ bubbles = alt.Chart(layout_df).mark_circle(opacity=0.85).encode(
     tooltip=["Type:N", "CO₂ cost (kg):Q"]
 ).add_params(type_selection).properties(
     title="Packed Bubble Chart: Avg CO₂ Emissions by Model Type",
-    width=800,
-    height=650
+    width=1000,
+    height=800
 )
 
 labels = alt.Chart(layout_df).mark_text(
