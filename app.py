@@ -78,7 +78,7 @@ metric_selection = alt.selection_point(fields=["Metric"], bind="legend")  # opti
 # --- Base bar chart ---
 base = alt.Chart(long_df).mark_bar().encode(
     x=alt.X("Metric:N", title="Evaluation Metric"),
-    y=alt.Y("Score:Q", title="Average Score"),
+    y=alt.Y("Score:Q", title="Average Score", scale=alt.Scale(domain=[0, 1])),
     color=alt.Color("Metric:N", legend=alt.Legend(title="Select Metric")),
     opacity=alt.condition(metric_selection, alt.value(1.0), alt.value(0.2)),
     tooltip=["Type:N", "Metric:N", alt.Tooltip("Score:Q", format=".2f")]
