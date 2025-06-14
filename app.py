@@ -99,12 +99,14 @@ labels = alt.Chart(long_df).mark_text(
 
 # --- Combine bar and text, then facet by Type ---
 chart = (base + labels).facet(
-    column=alt.Column("Type:N", title=None, header=alt.Header(labelAngle=0), spacing=40)
-).resolve_scale(
-    y="shared"
+    column=alt.Column("Type:N", title=None, header=alt.Header(labelAngle=0))
 ).properties(
-    title="Scores by Evaluation Metric (Click Metric in legend to Highlight Across All Types)"
+    title="Scores by Evaluation Metric (Click Metric in legend to Highlight Across All Types)",
+    spacing=40  # ✅ Apply spacing here
+).resolve_scale(
+    y="shared"  # If you want the y-axis consistent
 )
+
 
 # --- Display in Streamlit ---
 st.altair_chart(chart, use_container_width=True)
