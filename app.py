@@ -403,16 +403,18 @@ circles = circlify.circlify(
     target_enclosure=circlify.Circle(x=0, y=0, r=1)
 )
 
+# --- Scale layout to fit Altair space ---
+scale_factor = 100  # 🧠 tweak this to spread the layout nicely
 layout_df = pd.DataFrame([{
-    "x": circle.x,
-    "y": circle.y,
-    "r": circle.r,
+    "x": circle.x * scale_factor,
+    "y": circle.y * scale_factor,
+    "r": circle.r * scale_factor,
     "Type": grouped.iloc[i]["Type"],
     "CO₂ cost (kg)": grouped.iloc[i]["CO₂ cost (kg)"]
 } for i, circle in enumerate(circles)])
 
-# ✅ Use area for size
-layout_df["Size"] = (layout_df["r"] ** 2) * np.pi * 150000
+# ✅ Size = area = πr²
+layout_df["Size"] = (layout_df["r"] ** 2) * np.pi
 layout_df["CO₂ Rounded"] = layout_df["CO₂ cost (kg)"].round(1)
 
 # --- Shared Altair selection ---
@@ -450,17 +452,13 @@ df["Month"] = df["Upload To Hub Date"].dt.to_period("M").dt.to_timestamp()
 monthly = df.groupby(["Month", "Type"])["CO₂ cost (kg)"].sum().reset_index()
 monthly["Cumulative CO₂"] = monthly.sort_values("Month").groupby("Type")["CO₂ cost (kg)"].cumsum()
 
-# --- Area Chart (linked) ---
+# --- Area Chart ---
 area_chart = alt.Chart(monthly).mark_area(interpolate="monotone").encode(
     x=alt.X("Month:T", title="Month"),
     y=alt.Y("Cumulative CO₂:Q", title="Cumulative CO₂ Emissions (kg)", stack="zero"),
     color=alt.Color("Type:N", legend=None),
     opacity=alt.condition(type_selection, alt.value(1.0), alt.value(0.1)),
-    tooltip=[
-        alt.Tooltip("Month:T", format="%B %Y"),
-        alt.Tooltip("Type:N"),
-        alt.Tooltip("Cumulative CO₂:Q", format=",.0f")
-    ]
+    tooltip=["Month:T", "Type:N", "Cumulative CO₂:Q"]
 ).add_params(type_selection).properties(
     title="Cumulative CO₂ Emissions Over Time",
     width=800,
