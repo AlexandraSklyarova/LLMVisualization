@@ -387,72 +387,64 @@ st.altair_chart(combined_chart, use_container_width=True)
 
 df.columns = df.columns.str.strip()
 df = df.rename(columns={"Average ⬆️": "Average"})
-
 df["CO₂ cost (kg)"] = pd.to_numeric(df["CO₂ cost (kg)"], errors="coerce")
 df["Upload To Hub Date"] = pd.to_datetime(df["Upload To Hub Date"], errors="coerce")
 df = df.dropna(subset=["CO₂ cost (kg)", "Upload To Hub Date", "Type"])
 df["Month"] = df["Upload To Hub Date"].dt.to_period("M").dt.to_timestamp()
 
-# --- Sidebar filters (optional) ---
-st.sidebar.header("Filters")
-type_options = df["Type"].unique().tolist()
-default_selection = type_options if len(type_options) < 10 else type_options[:5]
-selected_types = st.sidebar.multiselect("Filter by Model Type:", type_options, default=default_selection)
-df = df[df["Type"].isin(selected_types)]
-
 # --- Group for treemap ---
 agg_df = df.groupby("Type", as_index=False)["CO₂ cost (kg)"].mean()
-agg_df["CO₂ Rounded"] = agg_df["CO₂ cost (kg)"].round(1)
 
-# --- Display selected type in session state ---
-if "selected_treemap_type" not in st.session_state:
-    st.session_state.selected_treemap_type = None
+# --- Define consistent color scale ---
+color_scale = alt.Scale(scheme="tableau20")
+types_sorted = agg_df.sort_values("CO₂ cost (kg)", ascending=False)["Type"].tolist()
 
-# --- Treemap ---
-st.subheader("📦 Treemap: Avg CO₂ Emissions by Model Type")
+# --- Plotly Treemap with consistent color logic ---
+color_map = px.colors.qualitative.Tableau
+type_color_map = {t: color_map[i % len(color_map)] for i, t in enumerate(types_sorted)}
+
 fig = px.treemap(
     agg_df,
     path=["Type"],
     values="CO₂ cost (kg)",
-    color="CO₂ cost (kg)",
-    color_continuous_scale="YlOrRd",
-    title="Click a Rectangle to Filter the Time Series Below",
+    color="Type",
+    color_discrete_map=type_color_map,
     hover_data={"CO₂ cost (kg)": True}
 )
 fig.update_traces(root_color="lightgrey")
-treemap_click = st.plotly_chart(fig, use_container_width=True)
+fig.update_layout(margin=dict(t=40, l=0, r=0, b=0), title="Click a Box to Filter the Area Chart")
+
+# --- Display and capture click ---
+st.subheader("📦 Treemap: Avg CO₂ Emissions by Model Type")
+selected_points = plotly_events(fig, click_event=True, hover_event=False)
+selected_type = selected_points[0]["label"] if selected_points else None
 
 # --- Area chart data ---
 monthly = df.groupby(["Month", "Type"])["CO₂ cost (kg)"].sum().reset_index()
 monthly["Cumulative CO₂"] = monthly.sort_values("Month").groupby("Type")["CO₂ cost (kg)"].cumsum()
 
-# --- Linked interactivity using Streamlit dropdown (simulates treemap click) ---
-selected_type_for_chart = st.selectbox(
-    "Filter Time Series by Type (simulates treemap click):",
-    ["All"] + sorted(agg_df["Type"].tolist())
-)
-
-if selected_type_for_chart != "All":
-    filtered = monthly[monthly["Type"] == selected_type_for_chart]
-    color_legend = None
+# --- Filter if treemap click happened ---
+if selected_type:
+    filtered = monthly[monthly["Type"] == selected_type]
+    legend = None
 else:
     filtered = monthly
-    color_legend = alt.Legend(title="Model Type")
+    legend = alt.Legend(title="Model Type")
 
-# --- Area chart ---
+# --- Altair Area Chart ---
 area_chart = alt.Chart(filtered).mark_area(interpolate="monotone").encode(
     x=alt.X("Month:T", title="Month"),
     y=alt.Y("Cumulative CO₂:Q", title="Cumulative CO₂ Emissions (kg)", stack="zero"),
-    color=alt.Color("Type:N", legend=color_legend),
+    color=alt.Color("Type:N", scale=color_scale, sort=types_sorted, legend=legend),
     tooltip=[
-        alt.Tooltip("Month:T", title="Month", format="%B %Y"),
-        alt.Tooltip("Type:N", title="Model Type"),
-        alt.Tooltip("Cumulative CO₂:Q", title="Cumulative CO₂ (kg)", format=",.0f")
+        alt.Tooltip("Month:T", format="%b %Y"),
+        alt.Tooltip("Type:N"),
+        alt.Tooltip("Cumulative CO₂:Q", format=",.0f", title="Cumulative CO₂ (kg)")
     ]
 ).properties(
     width=800,
     height=500,
-    title="Cumulative CO₂ Emissions Over Time (Filtered by Model Type)"
+    title=f"Cumulative CO₂ Emissions Over Time{f' for {selected_type}' if selected_type else ''}"
 )
 
 st.altair_chart(area_chart, use_container_width=True)
