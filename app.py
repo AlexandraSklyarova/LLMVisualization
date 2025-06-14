@@ -387,36 +387,44 @@ st.altair_chart(combined_chart, use_container_width=True)
 
 
 
+# --- Clean and Prepare Data ---
 df.columns = df.columns.str.strip()
 df = df.rename(columns={"Average ⬆️": "Average"})
 
-# Drop missing values and convert
+# Ensure numeric and drop invalid rows
 df = df.dropna(subset=["Hub ❤️", "Average", "eval_name"])
 df["Hub ❤️"] = pd.to_numeric(df["Hub ❤️"], errors="coerce")
 df["Average"] = pd.to_numeric(df["Average"], errors="coerce")
 df = df.dropna(subset=["Hub ❤️", "Average"])
 
-# Bin average scores into 5-point ranges (0–5, 5–10, ..., 50–55)
+# --- Binning Average Score into 5-point intervals ---
 df["Average_Bin"] = ((df["Average"] // 5) * 5).astype(int)
 
-# Group by bin and compute mean Hub ❤️ score
-binned_avg = df.groupby("Average_Bin")["Hub ❤️"].mean().reset_index(name="Mean Hub ❤️")
+# --- Group and Aggregate ---
+binned_avg = df.groupby("Average_Bin", as_index=False).agg(
+    Mean_Hub_Score=("Hub ❤️", "mean"),
+    Eval_Count=("eval_name", "count")
+)
 
-# Create brush selection
+# Optional: Fill any remaining NaNs just in case
+binned_avg["Mean_Hub_Score"] = binned_avg["Mean_Hub_Score"].fillna(0)
+binned_avg["Eval_Count"] = binned_avg["Eval_Count"].fillna(0).astype(int)
+
+# --- Brushing Selection ---
 brush = alt.selection_interval(encodings=["x"])
 
-# Create heatmap-style bar chart with brushing
+# --- Heatmap-style Bar Chart ---
 heatmap = alt.Chart(binned_avg).mark_bar().encode(
     x=alt.X("Average_Bin:O", title="Average Score Bin (5 pt range)"),
-    y=alt.Y("Mean Hub ❤️:Q", title="Mean User Satisfaction", scale=alt.Scale(domain=[0, 100])),
+    y=alt.Y("Mean_Hub_Score:Q", title="Mean User Satisfaction", scale=alt.Scale(domain=[0, 100])),
     color=alt.condition(
         brush,
-        alt.Color("Mean Hub ❤️:Q", scale=alt.Scale(scheme="blues"), title="Mean Hub ❤️"),
+        alt.Color("Mean_Hub_Score:Q", scale=alt.Scale(scheme="blues"), title="Mean Hub ❤️"),
         alt.value("lightgray")
     ),
     tooltip=[
         alt.Tooltip("Average_Bin:O", title="Average Score Bin"),
-        alt.Tooltip("Mean Hub ❤️:Q", title="Mean Hub ❤️", format=".1f"),
+        alt.Tooltip("Mean_Hub_Score:Q", title="Mean Hub ❤️", format=".1f"),
         alt.Tooltip("Eval_Count:Q", title="Number of Models")
     ]
 ).add_params(
@@ -428,3 +436,4 @@ heatmap = alt.Chart(binned_avg).mark_bar().encode(
 )
 
 st.altair_chart(heatmap, use_container_width=True)
+
