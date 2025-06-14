@@ -422,7 +422,7 @@ type_selection = alt.selection_point(fields=["Type"], bind="legend")
 bubbles = alt.Chart(layout_df).mark_circle(opacity=0.85).encode(
     x=alt.X("x:Q", axis=None),
     y=alt.Y("y:Q", axis=None),
-    size=alt.Size("Size:Q", scale=alt.Scale(range=[750, 35000]), legend=None),
+    size=alt.Size("Size:Q", scale=alt.Scale(range=[1000, 40000]), legend=None),
     color=alt.Color("Type:N", legend=alt.Legend(title="Model Type")),
     opacity=alt.condition(type_selection, alt.value(1.0), alt.value(0.2)),
     tooltip=["Type:N", "CO₂ cost (kg):Q"]
