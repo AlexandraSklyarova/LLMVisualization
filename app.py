@@ -400,7 +400,7 @@ color_scale = alt.Scale(scheme="tableau20")
 types_sorted = agg_df.sort_values("CO₂ cost (kg)", ascending=False)["Type"].tolist()
 
 # --- Plotly Treemap with consistent color logic ---
-color_map = px.colors.qualitative.Tableau
+color_map = px.colors.qualitative.tableau
 type_color_map = {t: color_map[i % len(color_map)] for i, t in enumerate(types_sorted)}
 
 fig = px.treemap(
