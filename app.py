@@ -101,7 +101,7 @@ labels = alt.Chart(long_df).mark_text(
 chart = (base + labels).facet(
     column=alt.Column("Type:N", title=None, header=alt.Header(labelAngle=0))
 ).resolve_scale(
-    y="independent"
+    y="shared"
 ).properties(
     title="Scores by Evaluation Metric (Click Metric in legend to Highlight Across All Types)"
 )
