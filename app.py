@@ -406,7 +406,7 @@ circles = circlify.circlify(
 )
 
 # --- Scale layout ---
-SCALE = 500  # Boosts spacing + size for visualization
+SCALE = 5000  # Boosts spacing + size for visualization
 layout_df = pd.DataFrame([{
     "x": c.x * SCALE,
     "y": c.y * SCALE,
