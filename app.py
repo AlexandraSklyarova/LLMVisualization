@@ -404,8 +404,8 @@ circles = circlify.circlify(
 
 # Position and size bubbles
 layout_df = pd.DataFrame([{
-    "x": c.x * grouped.iloc[i]["CO₂ cost (kg)"] * 1.5 * 100,  # x scaled to radius
-    "y": c.y * grouped.iloc[i]["CO₂ cost (kg)"] * 1.5 * 100,  # y scaled to radius
+    "x": c.x * grouped.iloc[i]["CO₂ cost (kg)"] * 1.5 * 75,  # x scaled to radius
+    "y": c.y * grouped.iloc[i]["CO₂ cost (kg)"] * 1.5 * 75,  # y scaled to radius
     "r": grouped.iloc[i]["CO₂ cost (kg)"],
     "Type": grouped.iloc[i]["Type"],
     "CO₂ cost (kg)": grouped.iloc[i]["CO₂ cost (kg)"]
