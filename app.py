@@ -407,7 +407,7 @@ circles = circlify.circlify(
 )
 
 # --- Two scales: layout vs visual size ---
-layout_scale = 200     # distance between centers (tight cluster)
+layout_scale = 50     # distance between centers (tight cluster)
 radius_boost = 1      # boost radius size without spacing them out too much
 
 layout_df = pd.DataFrame([{
