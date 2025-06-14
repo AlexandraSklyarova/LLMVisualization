@@ -402,20 +402,28 @@ df["Average_Bin"] = ((df["Average"] // 5) * 5).astype(int)
 # Group by bin and compute mean Hub ❤️ score
 binned_avg = df.groupby("Average_Bin")["Hub ❤️"].mean().reset_index(name="Mean Hub ❤️")
 
-# Create heatmap-style bar chart
+# Create brush selection
+brush = alt.selection_interval(encodings=["x"])
+
+# Create heatmap-style bar chart with brushing
 heatmap = alt.Chart(binned_avg).mark_bar().encode(
     x=alt.X("Average_Bin:O", title="Average Score Bin (5 pt range)"),
     y=alt.Y("Mean Hub ❤️:Q", title="Mean User Satisfaction", scale=alt.Scale(domain=[0, 100])),
-    color=alt.Color("Mean Hub ❤️:Q", scale=alt.Scale(scheme="blues"), title="Mean Hub ❤️"),
+    color=alt.condition(
+        brush,
+        alt.Color("Mean Hub ❤️:Q", scale=alt.Scale(scheme="blues"), title="Mean Hub ❤️"),
+        alt.value("lightgray")
+    ),
     tooltip=[
         alt.Tooltip("Average_Bin:O", title="Average Score Bin"),
         alt.Tooltip("Mean Hub ❤️:Q", title="Mean Hub ❤️", format=".1f")
     ]
+).add_params(
+    brush
 ).properties(
-    title="Mean User Satisfaction by Average Score Bin",
+    title="Mean User Satisfaction by Average Score Bin (Brush to Highlight)",
     width=600,
     height=400
 )
 
 st.altair_chart(heatmap, use_container_width=True)
-
