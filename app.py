@@ -308,7 +308,7 @@ def polar_positions(n, radius_step=0.4):
 type_selection = alt.selection_point(fields=["Type"], bind="legend")
 
 # --- Bubble chart data ---
-bubble_data = df.groupby("Type", as_index=False)["CO₂ cost (kg)"].average()
+bubble_data = df.groupby("Type", as_index=False)["CO₂ cost (kg)"].mean()
 bubble_data["CO₂ Rounded"] = bubble_data["CO₂ cost (kg)"].round().astype(int)
 bubble_data["Size"] = bubble_data["CO₂ cost (kg)"] ** 4
 bubble_data = bubble_data.sort_values("Type").reset_index(drop=True)
