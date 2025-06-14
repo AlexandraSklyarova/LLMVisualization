@@ -389,36 +389,33 @@ st.altair_chart(combined_chart, use_container_width=True)
 
 df.columns = df.columns.str.strip()
 df = df.rename(columns={"Average ⬆️": "Average"})
+
+# Drop missing values and convert
 df = df.dropna(subset=["Hub ❤️", "Average", "eval_name"])
 df["Hub ❤️"] = pd.to_numeric(df["Hub ❤️"], errors="coerce")
 df["Average"] = pd.to_numeric(df["Average"], errors="coerce")
 df = df.dropna(subset=["Hub ❤️", "Average"])
 
-# --- Binning ---
-df["Satisfaction_Bin"] = ((df["Hub ❤️"] // 10) * 10).astype(int)
+# Bin average scores into 5-point ranges (0–5, 5–10, ..., 50–55)
 df["Average_Bin"] = ((df["Average"] // 5) * 5).astype(int)
 
-# --- Aggregation ---
-binned = df.groupby(["Satisfaction_Bin", "Average_Bin"])["eval_name"].count().reset_index(name="Eval Count")
+# Group by bin and compute mean Hub ❤️ score
+binned_avg = df.groupby("Average_Bin")["Hub ❤️"].mean().reset_index(name="Mean Hub ❤️")
 
-# --- Brushing Selection ---
-brush = alt.selection_interval(encodings=["x", "y"], name="brush")
-
-# --- Heatmap ---
-heatmap = alt.Chart(binned).mark_rect().encode(
-    x=alt.X("Satisfaction_Bin:O", title="User Satisfaction Bin (10 pt range)"),
-    y=alt.Y("Average_Bin:O", title="Average Score Bin (5 pt range)", sort="ascending"),
-    color=alt.condition(
-        brush,
-        alt.Color("Eval Count:Q", scale=alt.Scale(scheme="blues"), title="Evaluation Count"),
-        alt.value("lightgray")
-    ),
-    tooltip=["Satisfaction_Bin", "Average_Bin", "Eval Count"]
-).add_params(brush).properties(
+# Create heatmap-style bar chart
+heatmap = alt.Chart(binned_avg).mark_bar().encode(
+    x=alt.X("Average_Bin:O", title="Average Score Bin (5 pt range)"),
+    y=alt.Y("Mean Hub ❤️:Q", title="Mean User Satisfaction", scale=alt.Scale(domain=[0, 100])),
+    color=alt.Color("Mean Hub ❤️:Q", scale=alt.Scale(scheme="blues"), title="Mean Hub ❤️"),
+    tooltip=[
+        alt.Tooltip("Average_Bin:O", title="Average Score Bin"),
+        alt.Tooltip("Mean Hub ❤️:Q", title="Mean Hub ❤️", format=".1f")
+    ]
+).properties(
+    title="Mean User Satisfaction by Average Score Bin",
     width=600,
-    height=500,
-    title=" Evaluation Density by Satisfaction & Score (Brush to Explore)"
+    height=400
 )
 
-# --- Display in Streamlit ---
 st.altair_chart(heatmap, use_container_width=True)
+
