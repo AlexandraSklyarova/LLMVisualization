@@ -102,7 +102,7 @@ chart = (base + labels).facet(
     column=alt.Column("Type:N", title=None, header=alt.Header(labelAngle=0))
 ).properties(
     title="Scores by Evaluation Metric (Click Metric in legend to Highlight Across All Types)",
-    spacing=40  # ✅ Apply spacing here
+    spacing=60  # ✅ Apply spacing here
 ).resolve_scale(
     y="shared"  # If you want the y-axis consistent
 )
