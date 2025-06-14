@@ -399,25 +399,28 @@ grouped = df.groupby("Type", as_index=False)["CO₂ cost (kg)"].mean()
 grouped["value"] = grouped["CO₂ cost (kg)"] ** 1.5
 
 # --- Compute packed layout with circlify ---
+# --- Circlify layout ---
 circles = circlify.circlify(
     grouped["value"].tolist(),
     show_enclosure=False,
     target_enclosure=circlify.Circle(x=0, y=0, r=1)
 )
 
-# --- Scale layout ---
-SCALE = 5000  # Boosts spacing + size for visualization
+# --- Two scales: layout vs visual size ---
+layout_scale = 300     # distance between centers (tight cluster)
+radius_boost = 10      # boost radius size without spacing them out too much
+
 layout_df = pd.DataFrame([{
-    "x": c.x * SCALE,
-    "y": c.y * SCALE,
-    "r": c.r * SCALE,
+    "x": c.x * layout_scale,
+    "y": c.y * layout_scale,
+    "r": c.r * radius_boost,
     "Type": grouped.iloc[i]["Type"],
     "CO₂ cost (kg)": grouped.iloc[i]["CO₂ cost (kg)"]
 } for i, c in enumerate(circles)])
 
-# --- Size = area ~ r² (visually proportional)
 layout_df["Size"] = (layout_df["r"] ** 2) * np.pi
 layout_df["CO₂ Rounded"] = layout_df["CO₂ cost (kg)"].round(1)
+
 
 # --- Selection ---
 type_selection = alt.selection_point(fields=["Type"], bind="legend")
