@@ -404,8 +404,8 @@ circles = circlify.circlify(
 
 # Position and size bubbles
 layout_df = pd.DataFrame([{
-    "x": c.x * grouped.iloc[i]["CO₂ cost (kg)"] * 2 * 100,  # x scaled to radius
-    "y": c.y * grouped.iloc[i]["CO₂ cost (kg)"] * 2 * 100,  # y scaled to radius
+    "x": c.x * grouped.iloc[i]["CO₂ cost (kg)"] * 1.6 * 100,  # x scaled to radius
+    "y": c.y * grouped.iloc[i]["CO₂ cost (kg)"] * 1.6 * 100,  # y scaled to radius
     "r": grouped.iloc[i]["CO₂ cost (kg)"],
     "Type": grouped.iloc[i]["Type"],
     "CO₂ cost (kg)": grouped.iloc[i]["CO₂ cost (kg)"]
@@ -452,18 +452,21 @@ monthly = df.groupby(["Month", "Type"])["CO₂ cost (kg)"].sum().reset_index()
 monthly["Cumulative CO₂"] = monthly.sort_values("Month").groupby("Type")["CO₂ cost (kg)"].cumsum()
 
 # --- Area chart ---
+zoom = alt.selection_interval(bind="scales")
+
+# --- Area chart with zoom + month-year x-axis formatting ---
 area_chart = alt.Chart(monthly).mark_area(interpolate="monotone").encode(
-    x=alt.X("Month:T", title="Month"),
+    x=alt.X("Month:T", title="Month", axis=alt.Axis(format="%b %Y")),
     y=alt.Y("Cumulative CO₂:Q", title="Cumulative CO₂ Emissions (kg)", stack="zero"),
     color=alt.Color("Type:N", legend=None),
     opacity=alt.condition(type_selection, alt.value(1.0), alt.value(0.1)),
     tooltip=[
-        alt.Tooltip("Month:T", format="%B %Y"),
+        alt.Tooltip("Month:T", title="Month", format="%B %Y"),
         alt.Tooltip("Type:N"),
         alt.Tooltip("Cumulative CO₂:Q", format=",.0f")
     ]
-).add_params(type_selection).properties(
-    title="Cumulative CO₂ Emissions Over Time",
+).add_params(type_selection, zoom).properties(
+    title="Cumulative CO₂ Emissions Over Time (Zoom Enabled)",
     width=800,
     height=400
 )
