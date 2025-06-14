@@ -99,7 +99,7 @@ labels = alt.Chart(long_df).mark_text(
 
 # --- Combine bar and text, then facet by Type ---
 chart = (base + labels).facet(
-    column=alt.Column("Type:N", title=None, header=alt.Header(labelAngle=0))
+    column=alt.Column("Type:N", title=None, header=alt.Header(labelAngle=0), spacing=40)
 ).resolve_scale(
     y="shared"
 ).properties(
