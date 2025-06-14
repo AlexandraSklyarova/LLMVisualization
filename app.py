@@ -395,6 +395,18 @@ df = df.dropna(subset=["CO₂ cost (kg)", "Upload To Hub Date", "Type"])
 # --- Use CO₂ as radius directly ---
 grouped = df.groupby("Type", as_index=False)["CO₂ cost (kg)"].mean()
 
+angle_step = 2 * np.pi / len(grouped)
+radius = 1200  # adjust for spacing
+
+layout_df = grouped.copy()
+layout_df["angle"] = [i * angle_step for i in range(len(grouped))]
+layout_df["x"] = np.cos(layout_df["angle"]) * radius
+layout_df["y"] = np.sin(layout_df["angle"]) * radius
+
+layout_df["r"] = layout_df["CO₂ cost (kg)"]
+layout_df["Size"] = (layout_df["r"] ** 2) * np.pi
+layout_df["CO₂ Rounded"] = layout_df["r"].round(1)
+
 # Circlify layout using CO₂ directly
 circles = circlify.circlify(
     grouped["CO₂ cost (kg)"].tolist(),
