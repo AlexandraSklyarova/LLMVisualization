@@ -412,7 +412,7 @@ layout_df = pd.DataFrame([{
 } for i, circle in enumerate(circles)])
 
 # ✅ Use area to represent bubble size
-layout_df["Size"] = (layout_df["r"] ** 2) * np.pi * 15000
+layout_df["Size"] = (layout_df["r"] ** 5) * np.pi * 15000
 layout_df["CO₂ Rounded"] = layout_df["CO₂ cost (kg)"].round(1)
 
 # --- Shared selection between charts ---
