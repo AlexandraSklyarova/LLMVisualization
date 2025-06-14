@@ -416,7 +416,8 @@ heatmap = alt.Chart(binned_avg).mark_bar().encode(
     ),
     tooltip=[
         alt.Tooltip("Average_Bin:O", title="Average Score Bin"),
-        alt.Tooltip("Mean Hub ❤️:Q", title="Mean Hub ❤️", format=".1f")
+        alt.Tooltip("Mean Hub ❤️:Q", title="Mean Hub ❤️", format=".1f"),
+        alt.Tooltip("Eval_Count:Q", title="Number of Models")
     ]
 ).add_params(
     brush
