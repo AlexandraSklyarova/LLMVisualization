@@ -121,9 +121,7 @@ st.altair_chart(chart, use_container_width=True)
 
 
 
-
-
-st.markdown("### LLM Evaluation Metrics Overview")
+st.markdown("### Evaluation Metrics Overview")
 
 evaluation_summary = {
     "IFEval": {
@@ -146,14 +144,21 @@ evaluation_summary = {
     }
 }
 
-# Reformat into a transposed DataFrame
-evaluation_df = pd.DataFrame.from_dict(evaluation_summary, orient="columns")
-evaluation_df.index.name = "Info"
+# Break into two lists
+metrics1 = ["IFEval", "BBH", "MATH Lvl 5"]
+metrics2 = ["GPQA", "MuSR", "MMLU-Pro"]
 
-# Show the table
-st.table(evaluation_df)
+# Build the 4-row DataFrame
+custom_table = pd.DataFrame([
+    metrics1,
+    [evaluation_summary[m]["Description"] for m in metrics1],
+    metrics2,
+    [evaluation_summary[m]["Description"] for m in metrics2]
+])
 
-
+# Display the table
+st.markdown("### Evaluation Metrics Summary")
+st.dataframe(custom_table, use_container_width=True)
 
 
 # --- SAFELY HANDLE METRIC COLUMNS ---
