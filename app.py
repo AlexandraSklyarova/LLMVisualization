@@ -173,7 +173,7 @@ for metric in score_cols:
 
 # Create and display table
 best_df = pd.DataFrame(best_types)
-st.markdown("### 🏆 Best LLM Type per Evaluation Metric")
+st.markdown("Best LLM Type per Evaluation Metric")
 st.table(best_df)
 
 
