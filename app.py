@@ -225,7 +225,11 @@ st.table(best_df)
 
 
 
-st.markdown("---")
+st.markdown(
+    "<hr style='height:3px;border:none;color:#333;background-color:#333;'/>",
+    unsafe_allow_html=True
+)
+
 
 st.header("Number of Models and Growth Over Time")
 
