@@ -123,22 +123,69 @@ st.altair_chart(chart, use_container_width=True)
 
 evaluation_summary = {
     "IFEval": {
-        "Description": "Tests if a model can follow explicit formatting instructions (e.g., include keyword X, use format Y). Focus is on format adherence."
+        "Description": """
+**IFEval** checks whether a model can follow explicit formatting instructions.
+
+- Focuses on format adherence, not correctness  
+- Includes tasks like:  
+  - *“Include the keyword X”*  
+  - *“Respond using format Y”*  
+- Useful for evaluating models as tools in pipeline-style workflows
+"""
     },
     "BBH": {
-        "Description": "Challenging reasoning benchmark of 23 BigBench tasks (math, logic, language). Correlates with human judgment."
+        "Description": """
+**BBH** (Beyond the Imitation Game Benchmark) is a challenging reasoning benchmark.
+
+- Covers 23 BigBench tasks including:  
+  - Logic puzzles  
+  - Math word problems  
+  - Symbolic reasoning  
+- Highly correlated with human preference judgments
+"""
     },
     "MATH Lvl 5": {
-        "Description": "Level 5 high school math competition problems. Requires exact output format using LaTeX/Asymptote."
+        "Description": """
+**MATH Lvl 5** consists of high school math competition problems.
+
+- Includes problems from contests like AMC and AIME  
+- Requires exact formatting (LaTeX, Asymptote)  
+- Emphasizes correctness, clarity, and structured output
+"""
     },
     "GPQA": {
-        "Description": "Graduate-level STEM questions validated by experts (biology, chemistry, physics). Gated to avoid contamination."
+        "Description": """
+**GPQA** is a graduate-level STEM question set vetted by domain experts.
+
+- Topics include:  
+  - Biology  
+  - Chemistry  
+  - Physics  
+- Designed to avoid test-set contamination  
+- Emphasizes true conceptual depth over pattern matching
+"""
     },
     "MuSR": {
-        "Description": "Long, multistep reasoning problems (e.g., mysteries, logistics). Requires long-context understanding."
+        "Description": """
+**MuSR** (Multistep Structured Reasoning) features long-context challenges.
+
+- Includes:  
+  - Logic puzzles  
+  - Mystery reasoning  
+  - Logistics chains  
+- Tests the model's ability to track dependencies over long input
+"""
     },
     "MMLU-Pro": {
-        "Description": "Refined version of MMLU with 10 choices, higher difficulty, cleaner data, and expert review."
+        "Description": """
+**MMLU-Pro** is a professional-grade variant of MMLU.
+
+- Differences from original MMLU:  
+  - 10 multiple-choice options (harder)  
+  - Expert-reviewed and cleaned  
+  - Harder distractors and fewer flaws  
+- Emphasizes nuanced world knowledge and test-taking skill
+"""
     }
 }
 
