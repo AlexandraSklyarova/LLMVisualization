@@ -219,9 +219,7 @@ best_df = pd.DataFrame(best_types)
 st.markdown("### Best LLM Type per Evaluation Metric")
 
 # Iterate and display all metrics
-for metric_name in evaluation_summary:
-    with st.expander(f"📊 {metric_name}"):
-        st.markdown(evaluation_summary[metric_name]["Description"])
+
 
 st.table(best_df)
 
