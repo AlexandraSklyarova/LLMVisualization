@@ -340,7 +340,11 @@ final_chart = alt.layer(line_chart, event_rule, event_text).properties(
 st.altair_chart(final_chart, use_container_width=True)
 
 
-st.markdown("---")
+st.markdown(
+    "<hr style='height:3px;border:none;color:#333;background-color:#333;'/>",
+    unsafe_allow_html=True
+)
+
 
 
 
@@ -462,7 +466,11 @@ st.altair_chart(combined_chart, use_container_width=True)
 
 
 
-st.markdown("---")
+st.markdown(
+    "<hr style='height:3px;border:none;color:#333;background-color:#333;'/>",
+    unsafe_allow_html=True
+)
+
 
 
 st.header("Relationship between Hub Likes and Average Scores of LLMs")
