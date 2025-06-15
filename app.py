@@ -73,6 +73,59 @@ st.markdown(
 )
 
 
+st.markdown("### 🔍 Model Type Key")
+st.markdown("Learn about the types of models included in this dashboard:")
+
+model_type_explanations = {
+    "🟢 Pretrained Model": """
+**Pretrained Model**
+- Newly trained from scratch using masked or causal language modeling.
+- Trained on large corpora like Common Crawl, Wikipedia, books, etc.
+- Forms the backbone of more advanced fine-tuned or merged models.
+""",
+    "🟩 Continuously Pretrained Model": """
+**Continuously Pretrained Model**
+- Built from existing pretrained models.
+- Further trained on more recent or curated corpora.
+- May include instruction tuning, domain-specific datasets, or chat data.
+""",
+    "🔶 Fine-Tuned on Domain-Specific Datasets": """
+**Fine-Tuned Model**
+- Pretrained models adapted to specific domains (e.g., medical, legal).
+- Fine-tuned on additional data without modifying architecture.
+- Usually boosts performance on target tasks at the cost of generality.
+""",
+    "💬 Chat Models (RLHF, DPO, IFT…)": """
+**Chat Models**
+- Trained using **Instruction-Following Tuning (IFT)**, **Reinforcement Learning with Human Feedback (RLHF)**, or **Direct Preference Optimization (DPO)**.
+- Tailored for natural conversation, task following, and user preference alignment.
+- Can output safer, more controllable text in interactive settings.
+""",
+    "🤝 Base Merges and MoErges": """
+**Merged Models (Base Merges / MoErges)**
+- Created by combining weights from multiple base or fine-tuned models.
+- May use **merge techniques** like addition, interpolation, or LoRA stacking.
+- Usually *not* trained further after merging.
+- Useful for combining capabilities or styles.
+""",
+    "🖼️ Multimodal Models": """
+**Multimodal Models**
+- Can process inputs from different modalities like **text**, **images**, **audio**, or **video**.
+- Examples include image captioning, vision-language models, and audio reasoning.
+- Represent the next frontier in general AI capabilities.
+"""
+}
+
+# Display with expanders
+for label, description in model_type_explanations.items():
+    with st.expander(label):
+        st.markdown(description)
+
+st.markdown(
+    "<hr style='height:3px;border:none;color:#333;background-color:#333;'/>",
+    unsafe_allow_html=True
+)
+
 
 
 st.header("Evaluation of Different LLM Models")
