@@ -477,8 +477,8 @@ bubbles = alt.Chart(layout_df).mark_circle(opacity=0.85).encode(
     tooltip=["Type:N", "CO₂ cost (kg):Q"]
 ).add_params(type_selection).properties(
     title="Average CO₂ Output per Model Type (Radius = CO₂ Cost (kg))",
-    width=800,
-    height=650
+    width=600,
+    height=450
 )
 
 labels = alt.Chart(layout_df).mark_text(
