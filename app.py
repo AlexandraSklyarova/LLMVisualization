@@ -149,9 +149,7 @@ for metric, info in evaluation_summary.items():
     with st.expander(f"📊 {metric}"):
         st.markdown(info["Description"])
 
-# Display the table
-st.markdown("### Evaluation Metrics Summary")
-st.dataframe(custom_table, use_container_width=True)
+
 
 
 # --- SAFELY HANDLE METRIC COLUMNS ---
