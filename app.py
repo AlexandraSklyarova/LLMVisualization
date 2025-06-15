@@ -151,34 +151,8 @@ evaluation_df = pd.DataFrame.from_dict(evaluation_summary, orient="columns")
 evaluation_df.index.name = "Info"
 
 # Show the table
-styled_df = evaluation_df.T.reset_index().rename(columns={"index": "Metric"})
+st.table(evaluation_df)
 
-# Generate custom HTML with wider columns
-def make_wide_table(df):
-    html = """
-    <style>
-        table {
-            width: 100%;
-            table-layout: fixed;
-        }
-        th, td {
-            padding: 10px;
-            text-align: left;
-            vertical-align: top;
-        }
-        th:nth-child(1), td:nth-child(1) {
-            width: 20%;
-        }
-        th:nth-child(2), td:nth-child(2) {
-            width: 80%;
-        }
-    </style>
-    """
-    html += styled_df.to_html(index=False, escape=False)
-    return html
-
-st.markdown("### Evaluation Metric Descriptions", unsafe_allow_html=True)
-st.markdown(make_wide_table(styled_df), unsafe_allow_html=True)
 
 
 
