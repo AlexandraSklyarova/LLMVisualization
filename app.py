@@ -123,7 +123,7 @@ st.altair_chart(chart, use_container_width=True)
 
 
 
-st.markdown("LLM Evaluation Metrics Overview")
+st.markdown("### LLM Evaluation Metrics Overview")
 
 evaluation_summary = {
     "IFEval": {
@@ -173,7 +173,7 @@ for metric in score_cols:
 
 # Create and display table
 best_df = pd.DataFrame(best_types)
-st.markdown("Best LLM Type per Evaluation Metric")
+st.markdown("### Best LLM Type per Evaluation Metric")
 st.table(best_df)
 
 
