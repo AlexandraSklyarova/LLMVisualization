@@ -73,50 +73,53 @@ st.markdown(
 )
 
 
-with st.expander("📦 Model Type Definitions (Click to Expand)"):
-    with st.expander("🟢 Pretrained Model"):
-        st.markdown("""
+st.markdown("### 🔍 Model Type Key")
+st.markdown("Learn about the types of models included in this dashboard:")
+
+model_type_explanations = {
+    "🟢 Pretrained Model": """
 **Pretrained Model**
-- Trained from scratch on large general corpora using masked or causal language modeling.
-- Serves as the foundation for other model types.
-""")
-
-    with st.expander("🟩 Continuously Pretrained Model"):
-        st.markdown("""
+- Newly trained from scratch using masked or causal language modeling.
+- Trained on large corpora like Common Crawl, Wikipedia, books, etc.
+- Forms the backbone of more advanced fine-tuned or merged models.
+""",
+    "🟩 Continuously Pretrained Model": """
 **Continuously Pretrained Model**
-- An existing base model further trained on more data (e.g., newer corpora, domain-specific data, or instruction tuning).
-- Bridges the gap between base pretraining and fine-tuning.
-""")
-
-    with st.expander("🔶 Fine-Tuned on Domain-Specific Datasets"):
-        st.markdown("""
+- Built from existing pretrained models.
+- Further trained on more recent or curated corpora.
+- May include instruction tuning, domain-specific datasets, or chat data.
+""",
+    "🔶 Fine-Tuned on Domain-Specific Datasets": """
 **Fine-Tuned Model**
-- Adapted from a pretrained model using specialized datasets (e.g., biomedical, legal).
-- Improves performance in niche domains at the cost of generality.
-""")
-
-    with st.expander("💬 Chat Models (RLHF, DPO, IFT…)"):
-        st.markdown("""
+- Pretrained models adapted to specific domains (e.g., medical, legal).
+- Fine-tuned on additional data without modifying architecture.
+- Usually boosts performance on target tasks at the cost of generality.
+""",
+    "💬 Chat Models (RLHF, DPO, IFT…)": """
 **Chat Models**
-- Trained using instruction datasets (IFT), human feedback (RLHF), or preference modeling (DPO).
-- Optimized for interactive use cases, producing more useful or polite text.
-""")
-
-    with st.expander("🤝 Base Merges and MoErges"):
-        st.markdown("""
-**Merged Models**
-- Formed by combining weights from multiple base or fine-tuned models.
-- May involve simple arithmetic merges or more complex fusion (MoErge).
-- Typically not trained further after merging.
-""")
-
-    with st.expander("🖼️ Multimodal Models"):
-        st.markdown("""
+- Trained using **Instruction-Following Tuning (IFT)**, **Reinforcement Learning with Human Feedback (RLHF)**, or **Direct Preference Optimization (DPO)**.
+- Tailored for natural conversation, task following, and user preference alignment.
+- Can output safer, more controllable text in interactive settings.
+""",
+    "🤝 Base Merges and MoErges": """
+**Merged Models (Base Merges / MoErges)**
+- Created by combining weights from multiple base or fine-tuned models.
+- May use **merge techniques** like addition, interpolation, or LoRA stacking.
+- Usually *not* trained further after merging.
+- Useful for combining capabilities or styles.
+""",
+    "🖼️ Multimodal Models": """
 **Multimodal Models**
-- Handle multiple input types: text, images, audio, or video.
-- Examples include GPT-4V, Flamingo, or CLIP.
-- Represent more general-purpose, sensory-aware AI systems.
-""")
+- Can process inputs from different modalities like **text**, **images**, **audio**, or **video**.
+- Examples include image captioning, vision-language models, and audio reasoning.
+- Represent the next frontier in general AI capabilities.
+"""
+}
+
+# Display with expanders
+for label, description in model_type_explanations.items():
+    with st.expander(label):
+        st.markdown(description)
 
 
 st.markdown(
