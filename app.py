@@ -65,6 +65,9 @@ st.title("Efficacy, Enjoyment, and Environment: An Exploration of Open LLM Leade
 
 
 
+st.header("Evaluation of Different LLM Models")
+
+st.markdown("In this section, you can explore the abilities of different LLM types based on various metrics (explained below). Use the sidebar to filter any additional information like how the scores have changed over time. ")
 
 # Transform data for faceted chart 
 
@@ -120,7 +123,7 @@ st.altair_chart(chart, use_container_width=True)
 
 
 
-st.markdown("###  LLM Evaluation Metrics Overview")
+st.markdown("LLM Evaluation Metrics Overview")
 
 evaluation_summary = {
     "IFEval": {
@@ -148,7 +151,34 @@ evaluation_df = pd.DataFrame.from_dict(evaluation_summary, orient="columns")
 evaluation_df.index.name = "Info"
 
 # Show the table
-st.table(evaluation_df)
+styled_df = evaluation_df.T.reset_index().rename(columns={"index": "Metric"})
+
+# Generate custom HTML with wider columns
+def make_wide_table(df):
+    html = """
+    <style>
+        table {
+            width: 100%;
+            table-layout: fixed;
+        }
+        th, td {
+            padding: 10px;
+            text-align: left;
+            vertical-align: top;
+        }
+        th:nth-child(1), td:nth-child(1) {
+            width: 20%;
+        }
+        th:nth-child(2), td:nth-child(2) {
+            width: 80%;
+        }
+    </style>
+    """
+    html += styled_df.to_html(index=False, escape=False)
+    return html
+
+st.markdown("### Evaluation Metric Descriptions", unsafe_allow_html=True)
+st.markdown(make_wide_table(styled_df), unsafe_allow_html=True)
 
 
 
@@ -174,8 +204,11 @@ st.table(best_df)
 
 
 
+st.markdown("---")
 
+st.header("Number of Models and Growth Over Time")
 
+st.markdown("Here you can explore which model types are the most common and how the total number has grown over the years")
 
 
 
@@ -282,7 +315,13 @@ final_chart = alt.layer(line_chart, event_rule, event_text).properties(
 st.altair_chart(final_chart, use_container_width=True)
 
 
+st.markdown("---")
 
+
+
+st.header("CO₂ Emissions Overview")
+
+st.markdown("Here's a breakdown of average CO₂ emissions per model type. Use the legend to filter.")
 
 
 
@@ -398,6 +437,12 @@ st.altair_chart(combined_chart, use_container_width=True)
 
 
 
+st.markdown("---")
+
+
+st.header("Relationship between Hub Likes and Average Scores of LLMs")
+
+st.markdown("Here you can explore how popular models are in relation to how they perform across different metrics. Filtering by time in the sidebar can reveal more about their relationship")
 
 
 
