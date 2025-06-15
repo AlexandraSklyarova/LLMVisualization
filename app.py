@@ -108,7 +108,7 @@ model_type_explanations = {
 - Usually *not* trained further after merging.
 - Useful for combining capabilities or styles.
 """,
-    "🖼️ Multimodal Models": """
+    "🌸 Multimodal Models": """
 **Multimodal Models**
 - Can process inputs from different modalities like **text**, **images**, **audio**, or **video**.
 - Examples include image captioning, vision-language models, and audio reasoning.
