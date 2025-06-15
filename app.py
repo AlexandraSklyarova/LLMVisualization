@@ -422,7 +422,7 @@ bubbles = alt.Chart(layout_df).mark_circle(opacity=0.85).encode(
     opacity=alt.condition(type_selection, alt.value(1.0), alt.value(0.2)),
     tooltip=["Type:N", "CO₂ cost (kg):Q"]
 ).add_params(type_selection).properties(
-    title="Packed Bubble Chart: Radius = CO₂ Cost (kg)",
+    title="Average CO₂ Output per Model Type (Radius = CO₂ Cost (kg))",
     width=800,
     height=650
 )
