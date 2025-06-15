@@ -118,64 +118,8 @@ chart = (base + labels).facet(
 st.altair_chart(chart, use_container_width=True)
 
 
-evaluation_summary = {
-    "IFEval": "Tests if a model can follow explicit formatting instructions (e.g., include keyword X, use format Y). Focus is on format adherence.",
-    "BBH": "Challenging reasoning benchmark of 23 BigBench tasks (math, logic, language). Correlates with human judgment.",
-    "MATH Lvl 5": "Level 5 high school math competition problems. Requires exact output format using LaTeX/Asymptote.",
-    "GPQA": "Graduate-level STEM questions validated by experts (biology, chemistry, physics). Gated to avoid contamination.",
-    "MuSR": "Long, multistep reasoning problems (e.g., mysteries, logistics). Requires long-context understanding.",
-    "MMLU-Pro": "Refined version of MMLU with 10 choices, higher difficulty, cleaner data, and expert review."
-}
-
-# Create two groups
-group1 = ["IFEval", "BBH", "MATH Lvl 5"]
-group2 = ["GPQA", "MuSR", "MMLU-Pro"]
-
-# HTML table
-html = """
-<style>
-table {
-    width: 100%;
-    table-layout: fixed;
-    border-collapse: collapse;
-}
-td, th {
-    border: 1px solid #ddd;
-    padding: 12px;
-    text-align: left;
-    vertical-align: top;
-    word-wrap: break-word;
-}
-tr:nth-child(even) {background-color: #f9f9f9;}
-</style>
-
-<table>
-<tr>
-  <th>{}</th><th>{}</th><th>{}</th>
-</tr>
-<tr>
-  <td>{}</td><td>{}</td><td>{}</td>
-</tr>
-<tr>
-  <th>{}</th><th>{}</th><th>{}</th>
-</tr>
-<tr>
-  <td>{}</td><td>{}</td><td>{}</td>
-</tr>
-</table>
-""".format(
-    group1[0], group1[1], group1[2],
-    evaluation_summary[group1[0]], evaluation_summary[group1[1]], evaluation_summary[group1[2]],
-    group2[0], group2[1], group2[2],
-    evaluation_summary[group2[0]], evaluation_summary[group2[1]], evaluation_summary[group2[2]]
-)
-
-# Render in Streamlit
-st.markdown("### Evaluation Metric Descriptions", unsafe_allow_html=True)
-st.markdown(html, unsafe_allow_html=True)
 
 
-st.markdown("### Evaluation Metrics Overview")
 
 evaluation_summary = {
     "IFEval": {
@@ -194,21 +138,16 @@ evaluation_summary = {
         "Description": "Long, multistep reasoning problems (e.g., mysteries, logistics). Requires long-context understanding."
     },
     "MMLU-Pro": {
-        "Description": "Refined version of MMLU, higher difficulty, cleaner data, and expert review."
+        "Description": "Refined version of MMLU with 10 choices, higher difficulty, cleaner data, and expert review."
     }
 }
 
-# Break into two lists
-metrics1 = ["IFEval", "BBH", "MATH Lvl 5"]
-metrics2 = ["GPQA", "MuSR", "MMLU-Pro"]
+st.markdown("### Evaluation Metric Descriptions")
 
-# Build the 4-row DataFrame
-custom_table = pd.DataFrame([
-    metrics1,
-    [evaluation_summary[m]["Description"] for m in metrics1],
-    metrics2,
-    [evaluation_summary[m]["Description"] for m in metrics2]
-])
+# --- Loop over metrics ---
+for metric, info in evaluation_summary.items():
+    with st.expander(f"📊 {metric}"):
+        st.markdown(info["Description"])
 
 # Display the table
 st.markdown("### Evaluation Metrics Summary")
