@@ -384,13 +384,13 @@ event_text = alt.Chart(event_df).mark_text(
     align="left",
     baseline="top",
     dx=5,
-    dy=-5,
+    dy=5,  # Slight positive shift downward for margin
     fontSize=11,
     fontStyle="italic",
     color="red"
 ).encode(
     x="date:T",
-    y=alt.value(0),
+    y=alt.value(10),  # Fixed y-value ensures the label stays in view
     text="label:N"
 )
 
