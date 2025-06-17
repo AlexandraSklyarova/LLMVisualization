@@ -36,7 +36,7 @@ selected_types = st.sidebar.multiselect("Select Model Types:", options=type_opti
 df = df[df["Type"].isin(selected_types)]
 
 # Score columns
-score_cols = ['IFEval', 'BBH', 'MATH Lvl 5', 'GPQA', 'MUSR', 'Average ⬆️']
+score_cols = ['IFEval', 'BBH', 'MATH Lvl 5', 'GPQA', 'MUSR']
 
 # Filter by minimum average score
 min_score = st.sidebar.slider("Minimum Average Score",
