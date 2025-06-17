@@ -255,37 +255,7 @@ evaluation_summary = {
 
 st.markdown("### Evaluation Metric Descriptions")
 
-# --- Loop over metrics ---
-for metric, info in evaluation_summary.items():
-    with st.expander(f"📊 {metric}"):
-        st.markdown(info["Description"])
 
-
-
-
-# --- SAFELY HANDLE METRIC COLUMNS ---
-# First make sure all expected metric columns are actually in the grouped dataframe
-expected_metrics = ['IFEval', 'BBH', 'MATH Lvl 5', 'GPQA', 'MuSR', 'MMLU-Pro']
-score_cols = [col for col in expected_metrics if col in grouped.columns]
-
-# Get best model type for each metric
-best_types = []
-for metric in score_cols:
-    best_row = grouped.loc[grouped[metric].idxmax()]
-    best_types.append({
-        "Metric": metric,
-        "Best Model Type": best_row["Type"],
-        "Average Score": round(best_row[metric], 2)
-    })
-
-# Create and display table
-best_df = pd.DataFrame(best_types)
-st.markdown("### Best LLM Type per Evaluation Metric")
-
-# Iterate and display all metrics
-
-
-st.table(best_df)
 
 
 
