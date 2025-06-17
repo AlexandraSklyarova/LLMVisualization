@@ -253,8 +253,12 @@ evaluation_summary = {
     }
 }
 
+
 st.markdown("### Evaluation Metric Descriptions")
 
+for eval_name, content in evaluation_summary.items():
+    with st.expander(eval_name):
+        st.markdown(content["Description"])
 
 
 
