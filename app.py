@@ -171,7 +171,7 @@ labels = alt.Chart(long_df).mark_text(
 chart = (base + labels).facet(
     column=alt.Column("Type:N", title=None, header=alt.Header(labelAngle=0))
 ).properties(
-    title="Scores by Evaluation Metric (Click Metric in legend to Highlight Across All Types)",
+    title="Scores by Evaluation Metric (scroll left to the legend to highlight a single metric across all types of LLMs)",
     spacing=60  # ✅ Apply spacing here
 ).resolve_scale(
     y="shared"  # If you want the y-axis consistent
@@ -367,10 +367,10 @@ line_chart = alt.Chart(monthly_counts).mark_line().encode(
 ).add_params(zoom)
 
 # --- Annotation line for April 2024 ---
-event_date = pd.to_datetime("2024-04-01")
+event_date = pd.to_datetime("2024-05-13")
 event_df = pd.DataFrame({
     "date": [event_date],
-    "label": ["Publication of Visualization-of-Thought (VoT)"]
+    "label": ["Release of GPT-4o"]
 })
 
 event_rule = alt.Chart(event_df).mark_rule(
@@ -402,6 +402,11 @@ final_chart = alt.layer(line_chart, event_rule, event_text).properties(
 )
 
 st.altair_chart(final_chart, use_container_width=True)
+
+
+
+
+
 
 
 st.markdown(
@@ -537,7 +542,7 @@ st.markdown(
 
 
 
-st.header("Relationship between Hub Likes and Average Scores of LLMs")
+st.header("Relationship between User Likes and Average Scores of LLMs")
 
 st.markdown("Here you can explore how popular models are in relation to how they perform across different metrics. Filtering by time in the sidebar can reveal more about their relationship")
 
@@ -579,12 +584,12 @@ heatmap = alt.Chart(binned_avg).mark_bar().encode(
     y=alt.Y("Mean_Hub_Score:Q", title="Mean User Satisfaction", scale=alt.Scale(domain=[0, 100])),
     color=alt.condition(
         brush,
-        alt.Color("Mean_Hub_Score:Q", scale=alt.Scale(scheme="blues"), title="Mean Hub ❤️"),
+        alt.Color("Mean_Hub_Score:Q", scale=alt.Scale(scheme="blues"), title="Mean Number of Likes "),
         alt.value("lightgray")
     ),
     tooltip=[
         alt.Tooltip("Average_Bin:O", title="Average Score Bin"),
-        alt.Tooltip("Mean_Hub_Score:Q", title="Mean Hub ❤️", format=".1f"),
+        alt.Tooltip("Mean_Hub_Score:Q", title="Mean Number of Likes", format=".1f"),
         alt.Tooltip("Eval_Count:Q", title="Number of Models")
     ]
 ).add_params(
