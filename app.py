@@ -131,7 +131,7 @@ st.markdown(
 
 st.header("Evaluation of Different LLM Models")
 
-st.markdown("In this section, you can explore the abilities of different LLM types based on various metrics (explained below). Use the sidebar to filter any additional information like how the scores have changed over time. Note that the scores are normalizaed and range from 0-100 ")
+st.markdown("In this section, you can explore the abilities of different LLM types based on various metrics (explained below). Use the sidebar to filter any additional information like how the scores have changed over time. Note that the scores are normalized and range from 0-100 ")
 
 # Transform data for faceted chart 
 
