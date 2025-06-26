@@ -576,3 +576,26 @@ heatmap = alt.Chart(binned_avg).mark_bar().encode(
 
 st.altair_chart(heatmap, use_container_width=True)
 
+
+
+
+#new 
+
+bubble_chart = alt.Chart(binned_avg).mark_circle(opacity=0.7).encode(
+    x=alt.X("Average_Bin:Q", title="Average Score Bin", scale=alt.Scale(zero=False)), 
+    y=alt.Y("Mean_Hub_Score:Q", title="Mean Number of Likes", scale=alt.Scale(domain=[0, 100])), 
+    size=alt.Size("Eval_Count:Q", title="Number of Models", scale=alt.Scale(range=[30, 100])), 
+    color=alt.Color("Mean_Hub_Score:Q", scale=alt.Scale(scheme="blues"), title="Mean Number of Likes"),
+    tooltip=[
+        alt.Tooltip("Average_Bin:Q", title="Average Score Bin"),
+        alt.Tooltip("Mean_Hub_Score:Q", title="Mean Number of Likes", format=".1f"),
+        alt.Tooltip("Eval_Count:Q", title="Number of Models"),
+    ]
+).properties(
+    title="Hub Likes vs Average Score Bin",
+    width=600,
+    height=400
+)
+
+st.altair_chart(bubble_chart, use_container_width=True)
+
