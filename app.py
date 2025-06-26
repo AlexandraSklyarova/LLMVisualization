@@ -133,56 +133,6 @@ st.header("Evaluation of Different LLM Models")
 
 st.markdown("In this section, you can explore the abilities of different LLM types based on various metrics (explained below). Use the sidebar to filter any additional information like how the scores have changed over time. Note that the scores are normalized and range from 0-100 ")
 
-# Transform data for faceted chart 
-
-long_df = grouped.melt(
-    id_vars=["Type"],
-    value_vars=score_cols,
-    var_name="Metric",
-    value_name="Score"
-)
-
-# --- Shared selection ---
-metric_selection = alt.selection_point(fields=["Metric"], bind="legend")  # optional bind
-
-# --- Base bar chart ---
-base = alt.Chart(long_df).mark_bar().encode(
-    x=alt.X("Metric:N", title="Evaluation Metric"),
-    y=alt.Y("Score:Q", title="Average Score", scale=alt.Scale(domain=[0, 55])),
-    color=alt.Color("Metric:N", legend=alt.Legend(title="Select Metric")),
-    opacity=alt.condition(metric_selection, alt.value(1.0), alt.value(0.2)),
-    tooltip=["Type:N", "Metric:N", alt.Tooltip("Score:Q", format=".2f")]
-).add_params(metric_selection)
-
-# --- Add labels ---
-labels = alt.Chart(long_df).mark_text(
-    align="center",
-    baseline="bottom",
-    dy=-5,
-    fontSize=11
-).encode(
-    x="Metric:N",
-    y="Score:Q",
-    text=alt.Text("Score:Q", format=".2f"),
-    opacity=alt.condition(metric_selection, alt.value(1.0), alt.value(0.2))
-)
-
-# --- Combine bar and text, then facet by Type ---
-chart = (base + labels).facet(
-    column=alt.Column("Type:N", title=None, header=alt.Header(labelAngle=0))
-).properties(
-    title="Scores by Evaluation Metric (scroll left to the legend to highlight a single metric across all types of LLMs)",
-    spacing=60  # ✅ Apply spacing here
-).resolve_scale(
-    y="shared"  # If you want the y-axis consistent
-)
-
-
-# --- Display in Streamlit ---
-st.altair_chart(chart, use_container_width=True)
-
-
-
 
 
 
