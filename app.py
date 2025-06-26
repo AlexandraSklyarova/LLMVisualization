@@ -626,8 +626,10 @@ points = alt.Chart(df).mark_circle(size=40, opacity=0.5).encode(
         alt.Tooltip("Average:Q", title="Average Score", format=".1f"),
         alt.Tooltip("Hub ❤️:Q", title="Hub Likes", format=".1f")
     ]
-).transform_filter(
-    brush  # ✅ Will now filter correctly based on Average_Bin
+).transform_filter(brush).properties(
+    title="Models in Selected Score Bin",
+    width=300,
+    height=400
 )
 
 # ---- DISPLAY BOTH ----
