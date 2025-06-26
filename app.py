@@ -601,11 +601,14 @@ brush = alt.selection_interval(encodings=["x"])
 # ---- LEFT CHART: HEATMAP BAR ----
 heatmap = alt.Chart(binned_avg).mark_bar().encode(
     x=alt.X("Average_Bin:O", title="Average Score Bin (5 pt range)"),
-    # ✅ Let Altair auto-scale the y-axis
     y=alt.Y("Mean_Hub_Score:Q", title="Mean Number of Likes"),
     color=alt.condition(
         brush,
-        alt.Color("Mean_Hub_Score:Q", scale=alt.Scale(scheme="blues"), title="Mean Likes"),
+        alt.Color(
+            "Mean_Hub_Score:Q",
+            scale=alt.Scale(scheme="bluepurple"),  # darker, richer blues
+            title="Mean Likes"
+        ),
         alt.value("lightgray")
     ),
     tooltip=[
@@ -624,7 +627,7 @@ heatmap = alt.Chart(binned_avg).mark_bar().encode(
 points = alt.Chart(df).mark_circle(size=40, opacity=0.5).encode(
     x=alt.X("Average:Q", title="Average Score"),
     y=alt.Y("Hub ❤️:Q", title="Hub Likes"),
-    color=alt.Color("Hub ❤️:Q", scale=alt.Scale(scheme="teals")),
+    scale=alt.Scale(scheme="bluepurple"),  # darker, richer blues
     tooltip=[
         alt.Tooltip("eval_name:N", title="Model Name"),
         alt.Tooltip("Average:Q", title="Average Score", format=".1f"),
