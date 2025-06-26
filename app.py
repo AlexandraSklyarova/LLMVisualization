@@ -587,40 +587,25 @@ df["Average"] = pd.to_numeric(df["Average"], errors="coerce")
 df["Hub ❤️"] = pd.to_numeric(df["Hub ❤️"], errors="coerce")
 df = df.dropna(subset=["Average", "Hub ❤️", "eval_name"])
 
-# ---- SELECTION ----
-brush = alt.selection_interval(encodings=["x", "y"])
+# ---- Bin the average scores for violin-style plotting ----
+df["Average_Bin"] = (df["Average"] // 5) * 5  # e.g., 55–60, 60–65 bins
+df["Average_Bin"] = df["Average_Bin"].astype(int)
 
-# ---- MAIN SCATTER ----
-points = alt.Chart(df).mark_circle(size=60, opacity=0.7).encode(
-    x=alt.X("Average:Q", title="Average Score"),
+# ---- Create a violin-like chart ----
+boxplot = alt.Chart(df).mark_boxplot(extent="min-max", size=15).encode(
+    x=alt.X("Average_Bin:O", title="Average Score Bin"),
     y=alt.Y("Hub ❤️:Q", title="Hub Likes"),
-    color=alt.condition(brush, alt.value("steelblue"), alt.value("lightgray")),
+    color=alt.Color("Average_Bin:N", legend=None),
     tooltip=[
         alt.Tooltip("eval_name:N", title="Model Name"),
         alt.Tooltip("Average:Q", title="Average Score", format=".1f"),
         alt.Tooltip("Hub ❤️:Q", title="Hub Likes", format=".1f")
     ]
-).add_params(brush).properties(
-    title="Each Model's Likes vs. Average Score",
+).properties(
+    title="Distribution of Model Likes by Average Score Bin",
     width=600,
     height=400
 )
 
-# ---- ZOOMED SCATTER ----
-zoomed = alt.Chart(df).mark_circle(size=60, opacity=0.7).encode(
-    x=alt.X("Average:Q", title="Average Score"),
-    y=alt.Y("Hub ❤️:Q", title="Hub Likes"),
-    color=alt.Color("Hub ❤️:Q", scale=alt.Scale(scheme="blues")),
-    tooltip=[
-        alt.Tooltip("eval_name:N", title="Model Name"),
-        alt.Tooltip("Average:Q", title="Average Score", format=".1f"),
-        alt.Tooltip("Hub ❤️:Q", title="Hub Likes", format=".1f")
-    ]
-).transform_filter(brush).properties(
-    title="Zoomed View",
-    width=600,
-    height=300
-)
-
 # ---- DISPLAY ----
-st.altair_chart(points & zoomed, use_container_width=True)
+st.altair_chart(boxplot, use_container_width=True)
