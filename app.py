@@ -195,23 +195,12 @@ long_df = grouped.melt(
     value_name="Score"
 )
 
-# ---- Streamlit Sidebar Filter ----
-all_types = long_df["Type"].unique().tolist()
-selected_types = st.sidebar.multiselect(
-    "Filter Model Types",
-    options=all_types,
-    default=all_types
-)
-
-
-
-# ---- Legend Selection (opacity) ----
 legend_selection = alt.selection_point(fields=["Type"], bind="legend")
 
-# ---- Base Bar Chart ----
-base = alt.Chart(filtered_df).mark_bar().encode(
+# ---- BASE BAR ----
+base = alt.Chart(long_df).mark_bar().encode(
     x=alt.X("Type:N", title="Model Type"),
-    y=alt.Y("Score:Q", title="Average Score"),
+    y=alt.Y("Score:Q", title="Average Score"),  # Will adjust range based on data after sidebar filter
     color=alt.Color("Type:N", legend=alt.Legend(title="Model Type")),
     opacity=alt.condition(legend_selection, alt.value(1.0), alt.value(0.2)),
     tooltip=[
@@ -221,8 +210,8 @@ base = alt.Chart(filtered_df).mark_bar().encode(
     ]
 ).add_params(legend_selection)
 
-# ---- Labels ----
-labels = alt.Chart(filtered_df).mark_text(
+# ---- LABELS ----
+labels = alt.Chart(long_df).mark_text(
     align="center",
     baseline="bottom",
     dy=-5,
@@ -234,17 +223,17 @@ labels = alt.Chart(filtered_df).mark_text(
     opacity=alt.condition(legend_selection, alt.value(1.0), alt.value(0.2))
 )
 
-# ---- Final Facet ----
+# ---- COMBINE + FACET ----
 chart = (base + labels).facet(
     column=alt.Column("Metric:N", title=None, header=alt.Header(labelAngle=0))
 ).properties(
     title="Scores by Model Type across Evaluation Metrics",
     spacing=60
 ).resolve_scale(
-    y="shared"  # Same scale across metrics
+    y="shared"  # Single, flexible y-axis across metrics
 )
 
-# ---- Render ----
+# ---- DISPLAY ----
 st.altair_chart(chart, use_container_width=True)
 
 
