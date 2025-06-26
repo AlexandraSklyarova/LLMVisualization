@@ -195,26 +195,18 @@ long_df = grouped.melt(
     value_name="Score"
 )
 
-# ---------------------------------------------------
-# 2️⃣ Create the SELECTION
-type_selection = alt.selection_point(fields=["Type"], bind="legend")  # New
-
-# ---------------------------------------------------
-# 3️⃣ Main Bar Chart
+# ---- Final Facet (no schema error) ----
 base = alt.Chart(long_df).mark_bar().encode(
     x=alt.X("Type:N", title="Model Type"),
     y=alt.Y("Score:Q", title="Average Score", scale=alt.Scale(domain=[0, 55])),
-    color=alt.Color("Type:N", legend=alt.Legend(title="Select Model Type")),
-    opacity=alt.condition(type_selection, alt.value(1.0), alt.value(0.2)),
+    color=alt.Color("Type:N", legend=alt.Legend(title="Model Type")),
     tooltip=[
         alt.Tooltip("Type:N", title="Model Type"),
         alt.Tooltip("Metric:N", title="Evaluation Metric"),
         alt.Tooltip("Score:Q", format=".2f")
     ]
-).add_params(type_selection)
+)
 
-# ---------------------------------------------------
-# 4️⃣ Labels
 labels = alt.Chart(long_df).mark_text(
     align="center",
     baseline="bottom",
@@ -223,12 +215,9 @@ labels = alt.Chart(long_df).mark_text(
 ).encode(
     x="Type:N",
     y="Score:Q",
-    text=alt.Text("Score:Q", format=".2f"),
-    opacity=alt.condition(type_selection, alt.value(1.0), alt.value(0.2))
+    text=alt.Text("Score:Q", format=".2f")
 )
 
-# ---------------------------------------------------
-# 5️⃣ Final Facet
 chart = (base + labels).facet(
     column=alt.Column("Metric:N", title="Evaluation Metric", header=alt.Header(labelAngle=0))
 ).properties(
@@ -241,10 +230,8 @@ chart = (base + labels).facet(
     y="shared"
 )
 
-# ---------------------------------------------------
-# 6️⃣ Render in Streamlit
 st.altair_chart(chart, use_container_width=True)
-
+⚡ Result
 
 
 
