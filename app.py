@@ -583,31 +583,58 @@ st.altair_chart(heatmap, use_container_width=True)
 
 df.columns = df.columns.str.strip()
 df = df.rename(columns={"Average ⬆️": "Average"})
-df["Average"] = pd.to_numeric(df["Average"], errors="coerce")
 df["Hub ❤️"] = pd.to_numeric(df["Hub ❤️"], errors="coerce")
+df["Average"] = pd.to_numeric(df["Average"], errors="coerce")
 df = df.dropna(subset=["Average", "Hub ❤️", "eval_name"])
 
-# ---- Density Contours ----
-contours = alt.Chart(df).transform_density(
-    "Average",
-    as_=["Average", "Density"],
-    groupby=["Hub ❤️"]
-).mark_area(opacity=0.3).encode(
-    x="Average:Q",
-    y="Density:Q",
-    color=alt.value("steelblue")
+# ---- BIN AVERAGE ----
+df["Average_Bin"] = ((df["Average"] // 5) * 5).astype(int)
+
+binned_avg = df.groupby("Average_Bin", as_index=False).agg(
+    Mean_Hub_Score=("Hub ❤️", "mean"),
+    Eval_Count=("eval_name", "count")
 )
 
-# ---- Point Overlay ----
+# ---- BRUSH SELECTION ----
+brush = alt.selection_interval(encodings=["x"])
+
+# ---- LEFT CHART: HEATMAP BAR ----
+heatmap = alt.Chart(binned_avg).mark_bar().encode(
+    x=alt.X("Average_Bin:O", title="Average Score Bin (5 pt range)"),
+    y=alt.Y("Mean_Hub_Score:Q", title="Mean Number of Likes", scale=alt.Scale(domain=[0, 100])),
+    color=alt.condition(brush,
+        alt.Color("Mean_Hub_Score:Q", scale=alt.Scale(scheme="blues"), title="Mean Likes"),
+        alt.value("lightgray")
+    ),
+    tooltip=[
+        alt.Tooltip("Average_Bin:O", title="Average Score Bin"),
+        alt.Tooltip("Mean_Hub_Score:Q", title="Mean Likes", format=".1f"),
+        alt.Tooltip("Eval_Count:Q", title="Number of Models")
+    ]
+).add_params(brush).properties(
+    title="Distribution of Likes by Average Score",
+    width=300,
+    height=400
+)
+
+# ---- RIGHT CHART: SCATTER ----
 points = alt.Chart(df).mark_circle(size=40, opacity=0.5).encode(
     x=alt.X("Average:Q", title="Average Score"),
     y=alt.Y("Hub ❤️:Q", title="Hub Likes"),
+    color=alt.Color("Hub ❤️:Q", scale=alt.Scale(scheme="teals")),
     tooltip=[
         alt.Tooltip("eval_name:N", title="Model Name"),
         alt.Tooltip("Average:Q", title="Average Score", format=".1f"),
-        alt.Tooltip("Hub ❤️:Q", title="Hub Likes", format=".1f"),
+        alt.Tooltip("Hub ❤️:Q", title="Hub Likes", format=".1f")
     ]
+).transform_filter(brush).properties(
+    title="Models in Selected Score Bin",
+    width=300,
+    height=400
 )
+
+# ---- COMBINE SIDE BY SIDE ----
+st.altair_chart(heatmap | points, use_container_width=True)
 
 # ---- Final Chart ----
 chart = points.properties(title="Density Contour: Likes vs. Average Score", width=600, height=400)
