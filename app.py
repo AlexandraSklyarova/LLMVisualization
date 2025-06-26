@@ -434,7 +434,7 @@ event_text = alt.Chart(event_df).mark_text(
 # --- Combine everything ---
 final_chart = alt.layer(line_chart, event_rule, event_text).properties(
     title="Cumulative Number of LLM Models Released Over Time (Zoom Enabled)",
-    width=1300,
+    width=1400,
     height=600
 )
 
