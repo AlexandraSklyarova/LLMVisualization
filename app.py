@@ -594,3 +594,18 @@ points = alt.Chart(df).mark_circle(size=40, opacity=0.5).encode(
 
 # ---- DISPLAY BOTH ----
 st.altair_chart(heatmap | points, use_container_width=True)
+
+st.markdown("""
+###  Key Conclusions
+-  **Rapid Growth:** The number of LLMs has surged, especially after mid‑2024, reflecting the accelerating pace of AI development.  
+-  **Top Performers:** 
+   - Models generally score highest on **IFEval** and lowest on **GPQA**, suggesting certain benchmarks remain more challenging. 
+   - Multimodal models did the best on average, however, they are also the newest so the data could be skewed in their favor.
+-  **Common Model Types:** Fine‑tuned models and base merges make up the bulk of available LLMs.  
+-  **CO₂ Impact:**  
+    - Multimodal models have the highest average CO₂ output per model.  
+    - Fine‑tuned models have contributed the most to total CO₂ emissions due to their sheer quantity.  
+-  **Performance vs. User Satisfaction:** Higher average scores don’t necessarily imply higher user satisfaction unless you control for the timeframe and context.  
+-  **Patterns over Time:** Model quality and popularity evolve rapidly. Filtering by date can reveal important shifts and trends.  
+-  **Implication for Users:** Evaluating LLMs benefits from considering both performance metrics and environmental impacts for a more holistic view.
+""", unsafe_allow_html=True)
