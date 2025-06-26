@@ -215,7 +215,7 @@ labels = alt.Chart(long_df).mark_text(
     align="center",
     baseline="bottom",
     dy=-5,
-    fontSize=11
+    fontSize=10
 ).encode(
     x="Type:N",
     y="Score:Q",
@@ -228,7 +228,7 @@ chart = (base + labels).facet(
     column=alt.Column("Metric:N", title=None, header=alt.Header(labelAngle=0))
 ).properties(
     title="Scores by Model Type across Evaluation Metrics",
-    spacing=60
+    spacing=40
 ).resolve_scale(
     y="shared"  # Single, flexible y-axis across metrics
 )
