@@ -392,7 +392,9 @@ st.markdown(
 
 st.header("CO₂ Emissions Overview")
 
-st.markdown(""Here's a breakdown of average CO₂ emissions per model type. Use the <span style='color:red'>LEGEND TO FILTER</span>"",unsafe_allow_html=True)
+st.markdown("""
+Here’s a breakdown of average CO₂ emissions per model type. Use the <span style='color:red'>LEGEND TO FILTER</span>.
+""", unsafe_allow_html=True)
 
 with st.expander("How Hugging Face LLM Leaderboard Collects CO₂ Data"):
     st.markdown("""
@@ -527,10 +529,13 @@ st.markdown(
 
 st.header("Relationship between User Likes and Average Scores of LLMs")
 
-st.markdown(""Here you can explore how popular models are in relation to how they perform across different metrics. Use the <span style='color:red'>BRUSH FEATURE IN THE LEFT CHART TO FILTER</span> both charts. Filtering by time in the sidebar can reveal even more about their relationship"",unsafe_allow_html=True)
+st.markdown("""
+Here you can explore how popular models are in relation to how they perform across different metrics. 
+Use the <span style='color:red'>BRUSH FEATURE IN THE LEFT CHART TO FILTER</span> both charts. 
+Filtering by time in the sidebar can reveal even more about their relationship.
+""", unsafe_allow_html=True)
 
 
-<span style='color:red'>LEGEND TO FILTER</span>"",unsafe_allow_html=True)
 
 
 
