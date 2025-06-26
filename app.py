@@ -36,7 +36,7 @@ selected_types = st.sidebar.multiselect("Select Model Types:", options=type_opti
 df = df[df["Type"].isin(selected_types)]
 
 # Score columns
-score_cols = ['IFEval', 'BBH', 'MATH Lvl 5', 'GPQA', 'MUSR', 'MMLU-Pro']
+score_cols = ['IFEval', 'BBH', 'MATH Lvl 5', 'GPQA', 'MUSR']
 
 # Filter by minimum average score
 min_score = st.sidebar.slider("Minimum Average Score",
@@ -244,17 +244,6 @@ evaluation_summary = {
   - Mystery reasoning  
   - Logistics chains  
 - Tests the model's ability to track dependencies over long input
-"""
-    },
-    "MMLU-Pro": {
-        "Description": """
-**MMLU-Pro** is a professional-grade variant of MMLU.
-
-- Differences from original MMLU:  
-  - 10 multiple-choice options (harder)  
-  - Expert-reviewed and cleaned  
-  - Harder distractors and fewer flaws  
-- Emphasizes nuanced world knowledge and test-taking skill
 """
     }
 }
