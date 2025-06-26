@@ -581,21 +581,44 @@ st.altair_chart(heatmap, use_container_width=True)
 
 #new 
 
-bubble_chart = alt.Chart(binned_avg).mark_circle(opacity=0.7).encode(
-    x=alt.X("Average_Bin:Q", title="Average Score Bin", scale=alt.Scale(zero=False)), 
-    y=alt.Y("Mean_Hub_Score:Q", title="Mean Number of Likes", scale=alt.Scale(domain=[0, 100])), 
-    size=alt.Size("Eval_Count:Q", title="Number of Models", scale=alt.Scale(range=[30, 100])), 
-    color=alt.Color("Mean_Hub_Score:Q", scale=alt.Scale(scheme="blues"), title="Mean Number of Likes"),
+df["Hub ❤️"] = pd.to_numeric(df["Hub ❤️"], errors="coerce")
+df["Average"] = pd.to_numeric(df["Average"], errors="coerce")
+df = df.dropna(subset=["Hub ❤️", "Average", "eval_name"])
+
+# Create a brush for interactive selection
+brush = alt.selection_interval(encodings=["x", "y"])
+
+# Main chart: All points
+points = alt.Chart(df).mark_circle(size=60, opacity=0.5).encode(
+    x=alt.X("Average:Q", title="Average Score"),
+    y=alt.Y("Hub ❤️:Q", title="Hub Likes"),
+    color=alt.condition(brush, alt.Color("Hub ❤️:Q", scale=alt.Scale(scheme="blues")), alt.value("lightgray")),
     tooltip=[
-        alt.Tooltip("Average_Bin:Q", title="Average Score Bin"),
-        alt.Tooltip("Mean_Hub_Score:Q", title="Mean Number of Likes", format=".1f"),
-        alt.Tooltip("Eval_Count:Q", title="Number of Models"),
+        alt.Tooltip("eval_name:N", title="Model Name"),
+        alt.Tooltip("Average:Q", title="Average Score", format=".1f"),
+        alt.Tooltip("Hub ❤️:Q", title="Hub Likes", format=".1f")
     ]
-).properties(
-    title="Hub Likes vs Average Score Bin",
+).add_params(brush).properties(
+    title="Each Model's Likes vs. Average Score",
     width=600,
-    height=400
+    height=300
 )
 
-st.altair_chart(bubble_chart, use_container_width=True)
+# Zoomed-in chart
+zoomed = alt.Chart(df).mark_circle(size=60, opacity=0.5).encode(
+    x=alt.X("Average:Q", title="Average Score"),
+    y=alt.Y("Hub ❤️:Q", title="Hub Likes"),
+    color=alt.Color("Hub ❤️:Q", scale=alt.Scale(scheme="blues")),
+    tooltip=[
+        alt.Tooltip("eval_name:N", title="Model Name"),
+        alt.Tooltip("Average:Q", title="Average Score", format=".1f"),
+        alt.Tooltip("Hub ❤️:Q", title="Hub Likes", format=".1f")
+    ]
+).transform_filter(brush).properties(
+    title="Zoomed View",
+    width=600,
+    height=300
+)
 
+# Combine and display
+st.altair_chart(points & zoomed, use_container_width=True)
