@@ -547,7 +547,7 @@ heatmap = alt.Chart(binned_avg).mark_bar().encode(
     color=alt.condition(
         brush,
         alt.Color("Mean_Hub_Score:Q",
-            scale=alt.Scale(scheme="viridis"), title="Mean Likes"),
+            scale=alt.Scale(scheme="goldred"), title="Mean Likes"),
         alt.value("lightgray")),
     tooltip=[
         alt.Tooltip("Average_Bin:O", title="Average Score Bin"),
@@ -563,7 +563,7 @@ heatmap = alt.Chart(binned_avg).mark_bar().encode(
 points = alt.Chart(df).mark_circle(size=40, opacity=0.5).encode(
     x=alt.X("Average:Q", title="Average Score"),
     y=alt.Y("Hub ❤️:Q", title="Hub Likes"),
-    color=alt.Color("Hub ❤️:Q", scale=alt.Scale(scheme="viridis")),
+    color=alt.Color("Hub ❤️:Q", scale=alt.Scale(scheme="goldred")),
     tooltip=[
         alt.Tooltip("eval_name:N", title="Model Name"),
         alt.Tooltip("Average:Q", title="Average Score", format=".1f"),
