@@ -299,76 +299,7 @@ pie
 
 
 
-#new
 
-
-df['Upload To Hub Date'] = pd.to_datetime(df['Upload To Hub Date'], errors='coerce')
-df = df.dropna(subset=['Upload To Hub Date', 'Type'])
-df['Month'] = df['Upload To Hub Date'].dt.to_period('M').dt.to_timestamp()
-
-# Group
-monthly_counts = (
-    df.groupby(['Month', 'Type'])
-    .size()
-    .reset_index(name='Model Count')
-)
-
-# Cumulative
-monthly_counts["Cumulative Models"] = (
-    monthly_counts.sort_values("Month")
-    .groupby("Type")["Model Count"]
-    .cumsum()
-)
-
-# ---- Main Line ----
-line_chart = alt.Chart(monthly_counts).mark_line().encode(
-    x=alt.X("Month:T", title="Month", axis=alt.Axis(format="%b %Y")),
-    y=alt.Y("Cumulative Models:Q", title="Total Number of Models"),
-    color=alt.Color("Type:N", title="Model Type"),
-    tooltip=[
-        alt.Tooltip("Month:T", title="Month", format="%B %Y"),
-        alt.Tooltip("Type:N", title="Model Type"),
-        alt.Tooltip("Cumulative Models:Q", title="Cumulative Models", format=",.0f")
-    ]
-)
-
-# ---- Event Annotation ----
-event_date = pd.to_datetime("2024-05-13")  # GPT-4o release
-event_df = pd.DataFrame({
-    "date": [event_date],
-    "label": ["Release of GPT-4o"]
-})
-event_rule = alt.Chart(event_df).mark_rule(strokeDash=[4, 4], color="red").encode(x="date:T")
-event_text = alt.Chart(event_df).mark_text(
-    align="left",
-    baseline="top",
-    dx=5,
-    dy=5,
-    fontSize=11,
-    fontStyle="italic",
-    color="red"
-).encode(
-    x="date:T",
-    y=alt.value(10),
-    text="label:N"
-)
-
-# ---- Final Combine ----
-final_chart = alt.layer(line_chart, event_rule, event_text).properties(
-    title="Cumulative Number of LLM Models Released Over Time",
-    width=1300,
-    height=600
-)
-
-st.altair_chart(final_chart, use_container_width=True)
-
-
-
-
-
-
-
-#old
 
 # --- Prepare data ---
 df['Upload To Hub Date'] = pd.to_datetime(df['Upload To Hub Date'], errors='coerce')
