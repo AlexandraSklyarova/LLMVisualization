@@ -195,21 +195,18 @@ long_df = grouped.melt(
     value_name="Score"
 )
 
-# ---- New Selection ----
-type_selection = alt.selection_point(fields=["Type"], bind="legend")  
+# --- Shared selection ---
+metric_selection = alt.selection_point(fields=["Metric"], bind="legend")  # original
 
-# ---- Bar and Labels ----
-bars = alt.Chart(long_df).mark_bar().encode(
-    x=alt.X("Type:N", title="Model Type"),
+# --- Base bar chart ---
+base = alt.Chart(long_df).mark_bar().encode(
+    x=alt.X("Metric:N", title="Evaluation Metric"),
     y=alt.Y("Score:Q", title="Average Score", scale=alt.Scale(domain=[0, 55])),
-    color=alt.Color("Type:N", legend=alt.Legend(title="Select Model Type")),
-    opacity=alt.condition(type_selection, alt.value(1.0), alt.value(0.2)),
-    tooltip=[
-        alt.Tooltip("Type:N", title="Model Type"),
-        alt.Tooltip("Metric:N", title="Evaluation Metric"),
-        alt.Tooltip("Score:Q", title="Average Score", format=".2f")
-    ]
-).add_params(type_selection)
+    color=alt.Color("Metric:N", legend=alt.Legend(title="Select Metric")),
+    opacity=alt.condition(metric_selection, alt.value(1.0), alt.value(0.2)),
+    tooltip=["Type:N", "Metric:N", alt.Tooltip("Score:Q", format=".2f")]
+).add_params(metric_selection)
+
 
 labels = alt.Chart(long_df).mark_text(
     align="center",
