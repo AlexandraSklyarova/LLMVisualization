@@ -563,6 +563,8 @@ heatmap = alt.Chart(binned_avg).mark_bar().encode(
     x=alt.X("Average_Bin:O", title="Average Score Bin (5 pt range)"),
     y=alt.Y("Mean_Hub_Score:Q",
             title="Mean Number of Likes",
+            scale=alt.Scale(domain=[0, 500])  # Fixed range
+    ),  # 👈 CLOSE the Y channel
     color=alt.condition(
         brush,
         alt.Color("Mean_Hub_Score:Q",
@@ -580,6 +582,7 @@ heatmap = alt.Chart(binned_avg).mark_bar().encode(
     width=300,
     height=400
 )
+
 # ---- RIGHT CHART ----
 points = alt.Chart(df).mark_circle(size=40, opacity=0.5).encode(
     x=alt.X("Average:Q", title="Average Score"),
