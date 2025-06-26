@@ -64,7 +64,7 @@ st.title("Performance, Pollution, and Popularity: An Exploration of Open LLM Lea
 st.markdown("""
 This dashboard explores the function, enjoyment, and environmental impact of open large language models (LLMs) submitted to the Hugging Face leaderboard.  
 Users can interactively compare model types across evaluation metrics, track model releases over time, and examine tradeoffs between utility and cost.  
-Use the sidebar filters to narrow your view by date, model type, or score threshold.
+Use the **sidebar filters** to narrow your view by date, model type, or score threshold.
 """)
 
 st.markdown(
