@@ -195,19 +195,27 @@ long_df = grouped.melt(
     value_name="Score"
 )
 
-# Main clustered bar chart
-clustered = alt.Chart(long_df).mark_bar().encode(
-    x=alt.X("Metric:N", title="Evaluation Metric"),
-    y=alt.Y("Score:Q", title="Average Score", scale=alt.Scale(domain=[0, 55])),
-    color=alt.Color("Type:N", title="Model Type"),
-    tooltip=["Type:N", "Metric:N", alt.Tooltip("Score:Q", format=".2f")]
-).properties(
-    title="Scores by Evaluation Metric and Model Type",
-    width=600,
-    height=400
-)
+# List of metrics
+metrics = long_df["Metric"].unique()
 
-st.altair_chart(clustered, use_container_width=True)
+# Create a chart for each metric
+for metric_name in metrics:
+    metric_data = long_df[long_df["Metric"] == metric_name]
+
+    chart = alt.Chart(metric_data).mark_bar().encode(
+        x=alt.X("Type:N", title="Model Type", sort="-y"),
+        y=alt.Y("Score:Q", title=f"{metric_name} Score"),
+        color=alt.Color("Type:N", legend=None),
+        tooltip=[
+            alt.Tooltip("Type:N", title="Model Type"),
+            alt.Tooltip("Score:Q", title=f"{metric_name} Score", format=".2f")
+        ]
+    ).properties(
+        title=f"{metric_name} Score by Model Type",
+        width=600,
+        height=300
+    )
+    st.altair_chart(chart, use_container_width=True)
 
 
 
