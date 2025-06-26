@@ -185,6 +185,60 @@ st.altair_chart(chart, use_container_width=True)
 
 
 
+
+#new
+
+long_df = grouped.melt(
+    id_vars=["Type"],
+    value_vars=score_cols,
+    var_name="Metric",
+    value_name="Score"
+)
+
+# Main clustered bar chart
+clustered = alt.Chart(long_df).mark_bar().encode(
+    x=alt.X("Metric:N", title="Evaluation Metric"),
+    y=alt.Y("Score:Q", title="Average Score", scale=alt.Scale(domain=[0, 55])),
+    color=alt.Color("Type:N", title="Model Type"),
+    tooltip=["Type:N", "Metric:N", alt.Tooltip("Score:Q", format=".2f")]
+).properties(
+    title="Scores by Evaluation Metric and Model Type",
+    width=600,
+    height=400
+)
+
+st.altair_chart(clustered, use_container_width=True)
+Result
+✅ All metrics across model types are grouped together, making comparisons easy and avoids scrolling.
+
+✅ Solution 2: Wrap Facets
+If you must keep faceting, you can make them wrap into multiple rows:
+
+python
+Copy
+Edit
+chart = (base + labels).facet(
+    column=alt.Column("Type:N", title="Model Type",
+                      header=alt.Header(labelAngle=0),
+                      sort=alt.SortField("Type")),
+    rows=1  # Adjust if needed
+).properties(
+    title="Scores by Evaluation Metric (Wrapped)",
+    spacing=40,
+    columns=3  # Number of columns per row
+).resolve_scale(
+    y="shared"
+)
+
+st.altair_chart(chart, use_container_width=True)
+
+
+
+
+
+
+
+
 evaluation_summary = {
     "IFEval": {
         "Description": """
@@ -518,7 +572,7 @@ st.markdown(
 
 st.header("Relationship between User Likes and Average Scores of LLMs")
 
-st.markdown("Here you can explore how popular models are in relation to how they perform across different metrics. Filtering by time in the sidebar can reveal more about their relationship")
+st.markdown("Here you can explore how popular models are in relation to how they perform across different metrics. Use the brush feature to filter both charts. Filtering by time in the sidebar can reveal more about their relationship")
 
 
 
@@ -526,60 +580,6 @@ st.markdown("Here you can explore how popular models are in relation to how they
 
 
 
-# --- Clean and Prepare Data ---
-df.columns = df.columns.str.strip()
-df = df.rename(columns={"Average ⬆️": "Average"})
-
-# Ensure numeric and drop invalid rows
-df = df.dropna(subset=["Hub ❤️", "Average", "eval_name"])
-df["Hub ❤️"] = pd.to_numeric(df["Hub ❤️"], errors="coerce")
-df["Average"] = pd.to_numeric(df["Average"], errors="coerce")
-df = df.dropna(subset=["Hub ❤️", "Average"])
-
-# --- Binning Average Score into 5-point intervals ---
-df["Average_Bin"] = ((df["Average"] // 5) * 5).astype(int)
-
-# --- Group and Aggregate ---
-binned_avg = df.groupby("Average_Bin", as_index=False).agg(
-    Mean_Hub_Score=("Hub ❤️", "mean"),
-    Eval_Count=("eval_name", "count")
-)
-
-# Optional: Fill any remaining NaNs just in case
-binned_avg["Mean_Hub_Score"] = binned_avg["Mean_Hub_Score"].fillna(0)
-binned_avg["Eval_Count"] = binned_avg["Eval_Count"].fillna(0).astype(int)
-
-# --- Brushing Selection ---
-brush = alt.selection_interval(encodings=["x"])
-
-# --- Heatmap-style Bar Chart ---
-heatmap = alt.Chart(binned_avg).mark_bar().encode(
-    x=alt.X("Average_Bin:O", title="Average Score Bin (5 pt range)"),
-    y=alt.Y("Mean_Hub_Score:Q", title="Mean Number of Likes", scale=alt.Scale(domain=[0, 100])),
-    color=alt.condition(
-        brush,
-        alt.Color("Mean_Hub_Score:Q", scale=alt.Scale(scheme="blues"), title="Mean Number of Likes "),
-        alt.value("lightgray")
-    ),
-    tooltip=[
-        alt.Tooltip("Average_Bin:O", title="Average Score Bin"),
-        alt.Tooltip("Mean_Hub_Score:Q", title="Mean Number of Likes", format=".1f"),
-        alt.Tooltip("Eval_Count:Q", title="Number of Models")
-    ]
-).add_params(
-    brush
-).properties(
-    title="Mean Number of Likes by Average Score Bin ",
-    width=600,
-    height=400
-)
-
-st.altair_chart(heatmap, use_container_width=True)
-
-
-
-
-#new 
 
 df.columns = df.columns.str.strip()
 df = df.rename(columns={"Average ⬆️": "Average"})
