@@ -208,29 +208,7 @@ clustered = alt.Chart(long_df).mark_bar().encode(
 )
 
 st.altair_chart(clustered, use_container_width=True)
-Result
-✅ All metrics across model types are grouped together, making comparisons easy and avoids scrolling.
 
-✅ Solution 2: Wrap Facets
-If you must keep faceting, you can make them wrap into multiple rows:
-
-python
-Copy
-Edit
-chart = (base + labels).facet(
-    column=alt.Column("Type:N", title="Model Type",
-                      header=alt.Header(labelAngle=0),
-                      sort=alt.SortField("Type")),
-    rows=1  # Adjust if needed
-).properties(
-    title="Scores by Evaluation Metric (Wrapped)",
-    spacing=40,
-    columns=3  # Number of columns per row
-).resolve_scale(
-    y="shared"
-)
-
-st.altair_chart(chart, use_container_width=True)
 
 
 
