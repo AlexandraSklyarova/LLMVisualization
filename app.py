@@ -195,19 +195,26 @@ long_df = grouped.melt(
     value_name="Score"
 )
 
-# --- Shared selection ---
-metric_selection = alt.selection_point(fields=["Metric"], bind="legend")  # original
+# ---------------------------------------------------
+# 2️⃣ Create the SELECTION
+type_selection = alt.selection_point(fields=["Type"], bind="legend")  # New
 
-# --- Base bar chart ---
+# ---------------------------------------------------
+# 3️⃣ Main Bar Chart
 base = alt.Chart(long_df).mark_bar().encode(
-    x=alt.X("Metric:N", title="Evaluation Metric"),
+    x=alt.X("Type:N", title="Model Type"),
     y=alt.Y("Score:Q", title="Average Score", scale=alt.Scale(domain=[0, 55])),
-    color=alt.Color("Metric:N", legend=alt.Legend(title="Select Metric")),
-    opacity=alt.condition(metric_selection, alt.value(1.0), alt.value(0.2)),
-    tooltip=["Type:N", "Metric:N", alt.Tooltip("Score:Q", format=".2f")]
-).add_params(metric_selection)
+    color=alt.Color("Type:N", legend=alt.Legend(title="Select Model Type")),
+    opacity=alt.condition(type_selection, alt.value(1.0), alt.value(0.2)),
+    tooltip=[
+        alt.Tooltip("Type:N", title="Model Type"),
+        alt.Tooltip("Metric:N", title="Evaluation Metric"),
+        alt.Tooltip("Score:Q", format=".2f")
+    ]
+).add_params(type_selection)
 
-
+# ---------------------------------------------------
+# 4️⃣ Labels
 labels = alt.Chart(long_df).mark_text(
     align="center",
     baseline="bottom",
@@ -220,12 +227,13 @@ labels = alt.Chart(long_df).mark_text(
     opacity=alt.condition(type_selection, alt.value(1.0), alt.value(0.2))
 )
 
-# ---- Final Facet ----
-chart = (bars + labels).facet(
+# ---------------------------------------------------
+# 5️⃣ Final Facet
+chart = (base + labels).facet(
     column=alt.Column("Metric:N", title="Evaluation Metric", header=alt.Header(labelAngle=0))
 ).properties(
     title="Scores by Model Type across Evaluation Metrics",
-    spacing=40,
+    spacing=60,
     columns=5,
     width=130,
     height=300
@@ -233,6 +241,8 @@ chart = (bars + labels).facet(
     y="shared"
 )
 
+# ---------------------------------------------------
+# 6️⃣ Render in Streamlit
 st.altair_chart(chart, use_container_width=True)
 
 
