@@ -203,8 +203,7 @@ selected_types = st.sidebar.multiselect(
     default=all_types
 )
 
-# Apply the sidebar filter
-filtered_df = long_df[long_df["Type"].isin(selected_types)]
+
 
 # ---- Legend Selection (opacity) ----
 legend_selection = alt.selection_point(fields=["Type"], bind="legend")
