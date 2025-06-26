@@ -561,23 +561,26 @@ brush = alt.selection_interval(encodings=["x"])
 # ---- LEFT CHART ----
 heatmap = alt.Chart(binned_avg).mark_bar().encode(
     x=alt.X("Average_Bin:O", title="Average Score Bin (5 pt range)"),
-    y=alt.Y("Mean_Hub_Score:Q", title="Mean Number of Likes"),
-        scale=alt.Scale(domain=[0, 500])),
+    y=alt.Y("Mean_Hub_Score:Q",
+            title="Mean Number of Likes",
+            scale=alt.Scale(domain=[0, 500])),  # ✅ Fixed range
     color=alt.condition(
         brush,
         alt.Color("Mean_Hub_Score:Q",
-            scale=alt.Scale(scheme="goldred"), title="Mean Likes"),
-        alt.value("lightgray")),
+                  scale=alt.Scale(scheme="goldred"),
+                  title="Mean Likes"),
+        alt.value("lightgray")
+    ),
     tooltip=[
         alt.Tooltip("Average_Bin:O", title="Average Score Bin"),
         alt.Tooltip("Mean_Hub_Score:Q", title="Mean Likes", format=".1f"),
-        alt.Tooltip("Eval_Count:Q", title="Number of Models")]
+        alt.Tooltip("Eval_Count:Q", title="Number of Models")
+    ]
 ).add_params(brush).properties(
     title="Distribution of Likes by Average Score",
     width=300,
     height=400
 )
-
 # ---- RIGHT CHART ----
 points = alt.Chart(df).mark_circle(size=40, opacity=0.5).encode(
     x=alt.X("Average:Q", title="Average Score"),
