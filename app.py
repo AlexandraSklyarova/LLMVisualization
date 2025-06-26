@@ -581,18 +581,20 @@ st.altair_chart(heatmap, use_container_width=True)
 
 #new 
 
-df["Hub ❤️"] = pd.to_numeric(df["Hub ❤️"], errors="coerce")
+df.columns = df.columns.str.strip()
+df = df.rename(columns={"Average ⬆️": "Average"})
 df["Average"] = pd.to_numeric(df["Average"], errors="coerce")
-df = df.dropna(subset=["Hub ❤️", "Average", "eval_name"])
+df["Hub ❤️"] = pd.to_numeric(df["Hub ❤️"], errors="coerce")
+df = df.dropna(subset=["Average", "Hub ❤️", "eval_name"])
 
-# Create a brush for interactive selection
+# ---- SELECTION ----
 brush = alt.selection_interval(encodings=["x", "y"])
 
-# Main chart: All points
-points = alt.Chart(df).mark_circle(size=60, opacity=0.5).encode(
+# ---- MAIN SCATTER ----
+points = alt.Chart(df).mark_circle(size=60, opacity=0.7).encode(
     x=alt.X("Average:Q", title="Average Score"),
     y=alt.Y("Hub ❤️:Q", title="Hub Likes"),
-    color=alt.condition(brush, alt.Color("Hub ❤️:Q", scale=alt.Scale(scheme="blues")), alt.value("lightgray")),
+    color=alt.condition(brush, alt.value("steelblue"), alt.value("lightgray")),
     tooltip=[
         alt.Tooltip("eval_name:N", title="Model Name"),
         alt.Tooltip("Average:Q", title="Average Score", format=".1f"),
@@ -601,11 +603,11 @@ points = alt.Chart(df).mark_circle(size=60, opacity=0.5).encode(
 ).add_params(brush).properties(
     title="Each Model's Likes vs. Average Score",
     width=600,
-    height=300
+    height=400
 )
 
-# Zoomed-in chart
-zoomed = alt.Chart(df).mark_circle(size=60, opacity=0.5).encode(
+# ---- ZOOMED SCATTER ----
+zoomed = alt.Chart(df).mark_circle(size=60, opacity=0.7).encode(
     x=alt.X("Average:Q", title="Average Score"),
     y=alt.Y("Hub ❤️:Q", title="Hub Likes"),
     color=alt.Color("Hub ❤️:Q", scale=alt.Scale(scheme="blues")),
@@ -620,5 +622,5 @@ zoomed = alt.Chart(df).mark_circle(size=60, opacity=0.5).encode(
     height=300
 )
 
-# Combine and display
+# ---- DISPLAY ----
 st.altair_chart(points & zoomed, use_container_width=True)
