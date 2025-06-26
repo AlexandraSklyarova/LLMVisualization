@@ -64,7 +64,7 @@ st.title("Performance, Pollution, and Popularity: An Exploration of Open LLM Lea
 st.markdown("""
 This dashboard explores the function, enjoyment, and environmental impact of open large language models (LLMs) submitted to the Hugging Face leaderboard.  
 Users can interactively compare model types across evaluation metrics, track model releases over time, and examine tradeoffs between utility and cost.  
-Use the **sidebar filters** to narrow your view by date, model type, or score threshold.
+Use the **SIDEBAR FILTERS** to narrow your view by date, model type, or score threshold.
 """)
 
 st.markdown(
@@ -131,7 +131,7 @@ st.markdown(
 
 st.header("Evaluation of Different LLM Models")
 
-st.markdown("In this section, you can explore the abilities of different LLM types based on various metrics (explained below). Use the sidebar to filter any additional information like how the scores have changed over time. Note that the scores are normalized and range from 0-100 ")
+st.markdown("In this section, you can explore the abilities of different LLM types based on various metrics (explained below). Use the **LEGEND TO FILTER** by type of model. Note that the scores are normalized and range from 0-100 ")
 
 
 
@@ -390,7 +390,7 @@ st.markdown(
 
 st.header("CO₂ Emissions Overview")
 
-st.markdown("Here's a breakdown of average CO₂ emissions per model type. Use the legend to filter.")
+st.markdown("Here's a breakdown of average CO₂ emissions per model type. Use the **LEGEND TO FILTER**")
 
 with st.expander("How Hugging Face LLM Leaderboard Collects CO₂ Data"):
     st.markdown("""
@@ -525,7 +525,7 @@ st.markdown(
 
 st.header("Relationship between User Likes and Average Scores of LLMs")
 
-st.markdown("Here you can explore how popular models are in relation to how they perform across different metrics. Use the brush feature to filter both charts. Filtering by time in the sidebar can reveal more about their relationship")
+st.markdown("Here you can explore how popular models are in relation to how they perform across different metrics. Use the **BRUSH FEATURE IN THE LEFT CHART TO FILTER** both charts. Filtering by time in the **SIDEBAR** can reveal even more about their relationship")
 
 
 
