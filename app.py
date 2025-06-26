@@ -587,25 +587,29 @@ df["Average"] = pd.to_numeric(df["Average"], errors="coerce")
 df["Hub ❤️"] = pd.to_numeric(df["Hub ❤️"], errors="coerce")
 df = df.dropna(subset=["Average", "Hub ❤️", "eval_name"])
 
-# ---- Bin the average scores for violin-style plotting ----
-df["Average_Bin"] = (df["Average"] // 5) * 5  # e.g., 55–60, 60–65 bins
-df["Average_Bin"] = df["Average_Bin"].astype(int)
+# ---- Density Contours ----
+contours = alt.Chart(df).transform_density(
+    "Average",
+    as_=["Average", "Density"],
+    groupby=["Hub ❤️"]
+).mark_area(opacity=0.3).encode(
+    x="Average:Q",
+    y="Density:Q",
+    color=alt.value("steelblue")
+)
 
-# ---- Create a violin-like chart ----
-boxplot = alt.Chart(df).mark_boxplot(extent="min-max", size=15).encode(
-    x=alt.X("Average_Bin:O", title="Average Score Bin"),
+# ---- Point Overlay ----
+points = alt.Chart(df).mark_circle(size=40, opacity=0.5).encode(
+    x=alt.X("Average:Q", title="Average Score"),
     y=alt.Y("Hub ❤️:Q", title="Hub Likes"),
-    color=alt.Color("Average_Bin:N", legend=None),
     tooltip=[
         alt.Tooltip("eval_name:N", title="Model Name"),
         alt.Tooltip("Average:Q", title="Average Score", format=".1f"),
-        alt.Tooltip("Hub ❤️:Q", title="Hub Likes", format=".1f")
+        alt.Tooltip("Hub ❤️:Q", title="Hub Likes", format=".1f"),
     ]
-).properties(
-    title="Distribution of Model Likes by Average Score Bin",
-    width=600,
-    height=400
 )
 
-# ---- DISPLAY ----
-st.altair_chart(boxplot, use_container_width=True)
+# ---- Final Chart ----
+chart = points.properties(title="Density Contour: Likes vs. Average Score", width=600, height=400)
+
+st.altair_chart(chart, use_container_width=True)
