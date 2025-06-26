@@ -333,9 +333,6 @@ line_chart = alt.Chart(monthly_counts).mark_line().encode(
 )
 
 # ---- Event Annotation ----
-event_date = pd.to_datetime("2024-05-13")
-event_df = pd.DataFrame({"date": [event_date], "label": ["Release of GPT-4o"]})
-event_rule = alt.Chart(event_df).mark_rule(strokeDash=[4, 4], color="red").encode(x="date:T")
 event_text = alt.Chart(event_df).mark_text(
     align="left",
     baseline="top",
@@ -346,9 +343,10 @@ event_text = alt.Chart(event_df).mark_text(
     color="red"
 ).encode(
     x="date:T",
-    y=alt.Value(10),
+    y=alt.value(10),  # ✅ Lowercase value
     text="label:N"
 )
+
 
 # ---- Final Combine ----
 final_chart = alt.layer(line_chart, event_rule, event_text).properties(
