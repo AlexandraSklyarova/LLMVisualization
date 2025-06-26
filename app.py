@@ -601,8 +601,10 @@ brush = alt.selection_interval(encodings=["x"])
 # ---- LEFT CHART: HEATMAP BAR ----
 heatmap = alt.Chart(binned_avg).mark_bar().encode(
     x=alt.X("Average_Bin:O", title="Average Score Bin (5 pt range)"),
-    y=alt.Y("Mean_Hub_Score:Q", title="Mean Number of Likes", scale=alt.Scale(domain=[0, 100])),
-    color=alt.condition(brush,
+    # ✅ Let Altair auto-scale the y-axis
+    y=alt.Y("Mean_Hub_Score:Q", title="Mean Number of Likes"),
+    color=alt.condition(
+        brush,
         alt.Color("Mean_Hub_Score:Q", scale=alt.Scale(scheme="blues"), title="Mean Likes"),
         alt.value("lightgray")
     ),
@@ -616,6 +618,7 @@ heatmap = alt.Chart(binned_avg).mark_bar().encode(
     width=300,
     height=400
 )
+
 
 # ---- RIGHT CHART: SCATTER ----
 points = alt.Chart(df).mark_circle(size=40, opacity=0.5).encode(
