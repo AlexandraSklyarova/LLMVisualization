@@ -152,13 +152,14 @@ legend_selection = alt.selection_point(fields=["Type"], bind="legend")
 # ---- BASE BAR ----
 base = alt.Chart(long_df).mark_bar().encode(
     x=alt.X("Type:N", title="Model Type"),
-    y=alt.Y("Score:Q", title="Average Score"),  # Will adjust range based on data after sidebar filter
+    y=alt.Y("Score:Q", title="Average Score",
+            scale=alt.Scale(domain=[0, 100])),  # ✅ Fixed range
     color=alt.Color("Type:N", legend=alt.Legend(title="Model Type")),
     opacity=alt.condition(legend_selection, alt.value(1.0), alt.value(0.2)),
     tooltip=[
         alt.Tooltip("Type:N", title="Model Type"),
         alt.Tooltip("Metric:N", title="Evaluation Metric"),
-        alt.Tooltip("Score:Q", title="Average Score", format=".2f")
+        alt.Tooltip("Score:Q", format=".2f")
     ]
 ).add_params(legend_selection)
 
