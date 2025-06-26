@@ -195,11 +195,11 @@ long_df = grouped.melt(
     value_name="Score"
 )
 
-# ---- New Selection: By Model Type ----
+# ---- New Selection ----
 type_selection = alt.selection_point(fields=["Type"], bind="legend")  
 
-# ---- Base Bar ----
-base = alt.Chart(long_df).mark_bar().encode(
+# ---- Bar and Labels ----
+bars = alt.Chart(long_df).mark_bar().encode(
     x=alt.X("Type:N", title="Model Type"),
     y=alt.Y("Score:Q", title="Average Score", scale=alt.Scale(domain=[0, 55])),
     color=alt.Color("Type:N", legend=alt.Legend(title="Select Model Type")),
@@ -207,11 +207,10 @@ base = alt.Chart(long_df).mark_bar().encode(
     tooltip=[
         alt.Tooltip("Type:N", title="Model Type"),
         alt.Tooltip("Metric:N", title="Evaluation Metric"),
-        alt.Tooltip("Score:Q", format=".2f")
+        alt.Tooltip("Score:Q", title="Average Score", format=".2f")
     ]
 ).add_params(type_selection)
 
-# ---- Labels ----
 labels = alt.Chart(long_df).mark_text(
     align="center",
     baseline="bottom",
@@ -224,12 +223,12 @@ labels = alt.Chart(long_df).mark_text(
     opacity=alt.condition(type_selection, alt.value(1.0), alt.value(0.2))
 )
 
-# ---- Final Faceted Chart ----
-chart = (base + labels).facet(
+# ---- Final Facet ----
+chart = (bars + labels).facet(
     column=alt.Column("Metric:N", title="Evaluation Metric", header=alt.Header(labelAngle=0))
 ).properties(
     title="Scores by Model Type across Evaluation Metrics",
-    spacing=60,
+    spacing=40,
     columns=5,
     width=130,
     height=300
@@ -237,7 +236,6 @@ chart = (base + labels).facet(
     y="shared"
 )
 
-# ---- Render ----
 st.altair_chart(chart, use_container_width=True)
 
 
