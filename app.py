@@ -392,11 +392,11 @@ st.header("CO₂ Emissions Overview")
 
 st.markdown("Here's a breakdown of average CO₂ emissions per model type. Use the legend to filter.")
 
-with st.expander("🌳 How Hugging Face LLM Leaderboard Collects CO₂ Data"):
+with st.expander("How Hugging Face LLM Leaderboard Collects CO₂ Data"):
     st.markdown("""
     - The LLM Leaderboard **doesn't measure CO₂ emissions itself**.  
     - It **displays CO₂ estimates** sourced from:
-        - Model cards (`model card` metadata) uploaded by the creators.
+        - Model cards uploaded by the creators.
         - The **ML CO₂ Impact Project** and similar efforts.
     - These estimates typically come from tools like:
         - [CodeCarbon](https://codecarbon.io/)
