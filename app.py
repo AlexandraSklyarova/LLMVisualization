@@ -196,12 +196,12 @@ long_df = grouped.melt(
 )
 
 # ---- Shared Selection ----
-type_selection = alt.selection_point(fields=["Type"], bind="legend")  # Now selecting by Type
+type_selection = alt.selection_point(fields=["Type"], bind="legend")  # Selection by Type
 
 # ---- Base Bar Chart ----
 base = alt.Chart(long_df).mark_bar().encode(
     x=alt.X("Type:N", title="Model Type"),
-    y=alt.Y("Score:Q", title="Average Score", scale=alt.Scale(domain=[0, 55])),
+    y=alt.Y("Score:Q", title="Average Score"),  # ✅ No fixed scale
     color=alt.Color("Type:N", legend=alt.Legend(title="Select Model Type")),
     opacity=alt.condition(type_selection, alt.value(1.0), alt.value(0.2)),
     tooltip=["Type:N", "Metric:N", alt.Tooltip("Score:Q", format=".2f")]
@@ -227,7 +227,7 @@ chart = (base + labels).facet(
     title="Scores by Model Type across Evaluation Metrics",
     spacing=60
 ).resolve_scale(
-    y="shared"
+    y="independent"  # ✅ Let each facet have its own Y scale
 )
 
 # ---- Render ----
