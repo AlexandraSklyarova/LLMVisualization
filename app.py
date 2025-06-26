@@ -196,16 +196,15 @@ long_df = grouped.melt(
 )
 
 # ---- Shared Selection ----
-type_selection = alt.selection_point(fields=["Type"], bind="legend")  # Selection by Type
+type_selection = alt.selection_point(fields=["Type"], bind="legend")
 
 # ---- Base Bar Chart ----
 base = alt.Chart(long_df).mark_bar().encode(
     x=alt.X("Type:N", title="Model Type"),
-    y=alt.Y("Score:Q", title="Average Score"),  # ✅ No fixed scale
+    y=alt.Y("Score:Q", title="Average Score"),
     color=alt.Color("Type:N", legend=alt.Legend(title="Select Model Type")),
-    opacity=alt.condition(type_selection, alt.value(1.0), alt.value(0.2)),
     tooltip=["Type:N", "Metric:N", alt.Tooltip("Score:Q", format=".2f")]
-).add_params(type_selection)
+)
 
 # ---- Labels ----
 labels = alt.Chart(long_df).mark_text(
@@ -216,18 +215,19 @@ labels = alt.Chart(long_df).mark_text(
 ).encode(
     x="Type:N",
     y="Score:Q",
-    text=alt.Text("Score:Q", format=".2f"),
-    opacity=alt.condition(type_selection, alt.value(1.0), alt.value(0.2))
+    text=alt.Text("Score:Q", format=".2f")
 )
 
-# ---- Final: Facet by Metric ----
-chart = (base + labels).facet(
+# ---- Final: Filtered & Faceted ----
+chart = (base + labels).add_params(type_selection).transform_filter(
+    type_selection
+).facet(
     column=alt.Column("Metric:N", title=None, header=alt.Header(labelAngle=0))
 ).properties(
     title="Scores by Model Type across Evaluation Metrics",
     spacing=60
 ).resolve_scale(
-    y="independent"  # ✅ Let each facet have its own Y scale
+    y="shared"
 )
 
 # ---- Render ----
