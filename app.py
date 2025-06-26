@@ -195,19 +195,35 @@ long_df = grouped.melt(
     value_name="Score"
 )
 
-# ---- Shared Selection ----
-type_selection = alt.selection_point(fields=["Type"], bind="legend")
-
-# ---- Base Bar Chart ----
-base = alt.Chart(long_df).mark_bar().encode(
-    x=alt.X("Type:N", title="Model Type"),
-    y=alt.Y("Score:Q", title="Average Score"),
-    color=alt.Color("Type:N", legend=alt.Legend(title="Select Model Type")),
-    tooltip=["Type:N", "Metric:N", alt.Tooltip("Score:Q", format=".2f")]
+# ---- Streamlit Sidebar Filter ----
+all_types = long_df["Type"].unique().tolist()
+selected_types = st.sidebar.multiselect(
+    "Filter Model Types",
+    options=all_types,
+    default=all_types
 )
 
+# Apply the sidebar filter
+filtered_df = long_df[long_df["Type"].isin(selected_types)]
+
+# ---- Legend Selection (opacity) ----
+legend_selection = alt.selection_point(fields=["Type"], bind="legend")
+
+# ---- Base Bar Chart ----
+base = alt.Chart(filtered_df).mark_bar().encode(
+    x=alt.X("Type:N", title="Model Type"),
+    y=alt.Y("Score:Q", title="Average Score"),
+    color=alt.Color("Type:N", legend=alt.Legend(title="Model Type")),
+    opacity=alt.condition(legend_selection, alt.value(1.0), alt.value(0.2)),
+    tooltip=[
+        alt.Tooltip("Type:N", title="Model Type"),
+        alt.Tooltip("Metric:N", title="Evaluation Metric"),
+        alt.Tooltip("Score:Q", title="Average Score", format=".2f")
+    ]
+).add_params(legend_selection)
+
 # ---- Labels ----
-labels = alt.Chart(long_df).mark_text(
+labels = alt.Chart(filtered_df).mark_text(
     align="center",
     baseline="bottom",
     dy=-5,
@@ -215,24 +231,22 @@ labels = alt.Chart(long_df).mark_text(
 ).encode(
     x="Type:N",
     y="Score:Q",
-    text=alt.Text("Score:Q", format=".2f")
+    text=alt.Text("Score:Q", format=".2f"),
+    opacity=alt.condition(legend_selection, alt.value(1.0), alt.value(0.2))
 )
 
-# ---- Final: Filtered & Faceted ----
-chart = (base + labels).add_params(type_selection).transform_filter(
-    type_selection
-).facet(
+# ---- Final Facet ----
+chart = (base + labels).facet(
     column=alt.Column("Metric:N", title=None, header=alt.Header(labelAngle=0))
 ).properties(
     title="Scores by Model Type across Evaluation Metrics",
     spacing=60
 ).resolve_scale(
-    y="shared"
+    y="shared"  # Same scale across metrics
 )
 
 # ---- Render ----
 st.altair_chart(chart, use_container_width=True)
-
 
 
 
