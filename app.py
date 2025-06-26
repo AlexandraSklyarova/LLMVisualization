@@ -562,6 +562,7 @@ brush = alt.selection_interval(encodings=["x"])
 heatmap = alt.Chart(binned_avg).mark_bar().encode(
     x=alt.X("Average_Bin:O", title="Average Score Bin (5 pt range)"),
     y=alt.Y("Mean_Hub_Score:Q", title="Mean Number of Likes"),
+        scale=alt.Scale(domain=[0, 500])),
     color=alt.condition(
         brush,
         alt.Color("Mean_Hub_Score:Q",
